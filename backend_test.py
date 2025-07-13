@@ -91,9 +91,9 @@ class BuildBytesAPITester:
     def test_unauthenticated_endpoints(self) -> bool:
         """Test endpoints that should require authentication"""
         endpoints_to_test = [
-            ('/me', 401),
-            ('/dashboard/stats', 401),
-            ('/subject-categories', 401)
+            ('/me', 403),  # FastAPI HTTPBearer returns 403 for missing auth header
+            ('/dashboard/stats', 403),
+            ('/subject-categories', 403)
         ]
         
         all_passed = True
