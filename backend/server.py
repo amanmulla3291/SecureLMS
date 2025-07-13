@@ -236,7 +236,7 @@ async def register(user_data: UserRegistration):
     if not validate_password(user_data.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters long and contain at least one letter and one number"
+            detail="Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number"
         )
     
     # Validate role
