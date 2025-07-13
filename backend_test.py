@@ -133,9 +133,9 @@ class BuildBytesAPITester:
             "color": "#FF0000"
         }
         
-        # Test POST without auth
+        # Test POST without auth - FastAPI HTTPBearer returns 403 for missing auth header
         success, response = self.make_request('POST', '/subject-categories', 
-                                            data=test_category, expected_status=401)
+                                            data=test_category, expected_status=403)
         
         if success:
             return self.log_test("Create Category Without Auth", True, "Correctly rejected")
