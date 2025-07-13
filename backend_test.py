@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class BuildBytesAPITester:
-    def __init__(self, base_url: str = "https://69c0f7a4-9e93-4ac4-ac56-e485692b5fd8.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://2d8ac9fe-e181-496f-9168-6a056d2e549d.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
