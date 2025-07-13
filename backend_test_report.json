@@ -1,240 +1,444 @@
 {
   "test_summary": {
-    "total_tests": 38,
-    "passed_tests": 37,
-    "failed_tests": 1,
-    "success_rate": 97.36842105263158
+    "total_tests": 72,
+    "passed_tests": 69,
+    "failed_tests": 3,
+    "success_rate": 95.83333333333334
   },
   "test_results": [
     {
       "name": "Health Check",
       "success": true,
       "details": "Version: 1.0.0",
-      "timestamp": "2025-07-13T18:06:11.532610"
+      "timestamp": "2025-07-13T18:17:55.767039"
     },
     {
       "name": "API Routing Structure",
-      "success": true,
-      "details": "API prefix working correctly",
-      "timestamp": "2025-07-13T18:06:11.591693"
+      "success": false,
+      "details": "Response: {'error': 'Request timeout - API may be slow or unresponsive'}",
+      "timestamp": "2025-07-13T18:18:10.792541"
     },
     {
       "name": "CORS Configuration",
       "success": false,
       "details": "Error: HTTPSConnectionPool(host='30fd2b50-0308-4158-b46f-1f5cbb0a9968.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
-      "timestamp": "2025-07-13T18:06:21.612477"
+      "timestamp": "2025-07-13T18:18:20.836519"
     },
     {
       "name": "Database Connection (Indirect)",
       "success": true,
       "details": "API responding correctly",
-      "timestamp": "2025-07-13T18:06:24.035216"
+      "timestamp": "2025-07-13T18:18:34.197167"
     },
     {
       "name": "Mentor Registration",
       "success": true,
-      "details": "User ID: 0889a767-794d-4c19-a687-f21ee440eb6e",
-      "timestamp": "2025-07-13T18:06:24.773187"
+      "details": "User ID: f985aa6b-d76b-49bc-9a56-b43d90042fe1",
+      "timestamp": "2025-07-13T18:18:34.747641"
     },
     {
       "name": "Student Registration",
       "success": true,
-      "details": "User ID: 9877911c-a940-40bd-a632-197682be065e",
-      "timestamp": "2025-07-13T18:06:31.236391"
+      "details": "User ID: 03bca391-d816-4423-9cbc-9d6b526843c8",
+      "timestamp": "2025-07-13T18:18:39.792484"
     },
     {
       "name": "Valid Password - TestPass123",
       "success": true,
       "details": "Valid password with uppercase, lowercase, and numbers",
-      "timestamp": "2025-07-13T18:06:31.525587"
+      "timestamp": "2025-07-13T18:18:40.071543"
     },
     {
       "name": "Valid Password - MySecure1",
       "success": true,
       "details": "Valid password - minimum requirements met",
-      "timestamp": "2025-07-13T18:06:36.050830"
+      "timestamp": "2025-07-13T18:18:40.327145"
     },
     {
       "name": "Valid Password - ValidPass9",
       "success": true,
       "details": "Valid password - all requirements satisfied",
-      "timestamp": "2025-07-13T18:06:37.379225"
+      "timestamp": "2025-07-13T18:18:40.579295"
     },
     {
       "name": "Invalid Password - nouppercase123",
       "success": true,
       "details": "No uppercase letter - should fail",
-      "timestamp": "2025-07-13T18:06:37.430409"
+      "timestamp": "2025-07-13T18:18:40.603976"
     },
     {
       "name": "Invalid Password - NOLOWERCASE123",
       "success": true,
       "details": "No lowercase letter - should fail",
-      "timestamp": "2025-07-13T18:06:37.964554"
+      "timestamp": "2025-07-13T18:18:40.628856"
     },
     {
       "name": "Invalid Password - NoNumbers",
       "success": true,
       "details": "No numbers - should fail",
-      "timestamp": "2025-07-13T18:06:37.983068"
+      "timestamp": "2025-07-13T18:18:40.648274"
     },
     {
       "name": "Invalid Password - Short1",
       "success": true,
       "details": "Too short (less than 8 characters) - should fail",
-      "timestamp": "2025-07-13T18:06:38.017360"
+      "timestamp": "2025-07-13T18:18:40.663660"
     },
     {
       "name": "Invalid Password - ValidPassword",
       "success": true,
       "details": "No numbers - should fail",
-      "timestamp": "2025-07-13T18:06:38.037037"
+      "timestamp": "2025-07-13T18:18:40.682041"
     },
     {
       "name": "Invalid Password - validpassword123",
       "success": true,
       "details": "No uppercase letter - should fail",
-      "timestamp": "2025-07-13T18:06:38.054572"
+      "timestamp": "2025-07-13T18:18:44.436759"
     },
     {
       "name": "Invalid Password - VALIDPASSWORD123",
       "success": true,
       "details": "No lowercase letter - should fail",
-      "timestamp": "2025-07-13T18:06:38.076487"
+      "timestamp": "2025-07-13T18:18:44.453515"
     },
     {
       "name": "Email Uniqueness",
       "success": true,
       "details": "Duplicate email correctly rejected",
-      "timestamp": "2025-07-13T18:06:38.099421"
+      "timestamp": "2025-07-13T18:18:44.474565"
     },
     {
       "name": "Role Validation",
       "success": true,
       "details": "Invalid role correctly rejected",
-      "timestamp": "2025-07-13T18:06:38.117572"
+      "timestamp": "2025-07-13T18:18:44.536207"
     },
     {
       "name": "Valid Login",
       "success": true,
       "details": "Token received for user: Dr. Sarah Johnson",
-      "timestamp": "2025-07-13T18:06:38.366942"
+      "timestamp": "2025-07-13T18:18:44.789330"
     },
     {
       "name": "Invalid Login",
       "success": true,
       "details": "Invalid credentials correctly rejected",
-      "timestamp": "2025-07-13T18:06:38.621230"
+      "timestamp": "2025-07-13T18:18:45.083314"
     },
     {
       "name": "Non-existent User Login",
       "success": true,
       "details": "Non-existent user correctly rejected",
-      "timestamp": "2025-07-13T18:06:38.641841"
+      "timestamp": "2025-07-13T18:18:45.125496"
     },
     {
       "name": "Valid JWT Token",
       "success": true,
       "details": "User info retrieved: Dr. Sarah Johnson",
-      "timestamp": "2025-07-13T18:06:38.701736"
+      "timestamp": "2025-07-13T18:18:45.145787"
     },
     {
       "name": "Invalid JWT Token",
       "success": true,
       "details": "Invalid token correctly rejected",
-      "timestamp": "2025-07-13T18:06:38.720744"
+      "timestamp": "2025-07-13T18:18:48.859974"
     },
     {
       "name": "Missing JWT Token",
       "success": true,
       "details": "Missing token correctly rejected",
-      "timestamp": "2025-07-13T18:06:38.742958"
+      "timestamp": "2025-07-13T18:18:48.881969"
     },
     {
       "name": "JWT Token Format",
       "success": true,
       "details": "Token has correct JWT format (3 parts)",
-      "timestamp": "2025-07-13T18:06:38.742982"
+      "timestamp": "2025-07-13T18:18:48.881993"
     },
     {
       "name": "JWT Token Validity",
       "success": true,
       "details": "Newly created token works correctly",
-      "timestamp": "2025-07-13T18:06:38.763898"
+      "timestamp": "2025-07-13T18:18:48.902901"
     },
     {
       "name": "Password Hashing - Original Password",
       "success": true,
       "details": "Original password works",
-      "timestamp": "2025-07-13T18:06:39.017183"
+      "timestamp": "2025-07-13T18:18:49.160769"
     },
     {
       "name": "Password Hashing - Wrong Password",
       "success": true,
       "details": "Wrong password correctly rejected",
-      "timestamp": "2025-07-13T18:06:39.284811"
+      "timestamp": "2025-07-13T18:18:49.410803"
     },
     {
       "name": "Protected Endpoint - GET /me",
       "success": true,
       "details": "Access granted with valid token",
-      "timestamp": "2025-07-13T18:06:39.307499"
+      "timestamp": "2025-07-13T18:18:49.469148"
     },
     {
       "name": "Protected Endpoint - GET /dashboard/stats",
       "success": true,
       "details": "Access granted with valid token",
-      "timestamp": "2025-07-13T18:06:39.329666"
+      "timestamp": "2025-07-13T18:18:49.497417"
     },
     {
       "name": "Protected Endpoint - GET /subject-categories",
       "success": true,
       "details": "Access granted with valid token",
-      "timestamp": "2025-07-13T18:06:39.389305"
+      "timestamp": "2025-07-13T18:18:49.532775"
     },
     {
       "name": "Student Access to Mentor Endpoint",
       "success": true,
       "details": "Student correctly denied access",
-      "timestamp": "2025-07-13T18:06:39.406225"
+      "timestamp": "2025-07-13T18:18:49.560660"
     },
     {
       "name": "Mentor Access to Mentor Endpoint",
       "success": true,
-      "details": "Category created: f03bb139-b8c5-40c0-9647-421c83c7f66a",
-      "timestamp": "2025-07-13T18:06:39.595281"
+      "details": "Category created: 6b9974c9-cedb-49b7-a070-fdf40c470b68",
+      "timestamp": "2025-07-13T18:18:49.577630"
     },
     {
       "name": "Unauthenticated Access - /me",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T18:06:39.613041"
+      "timestamp": "2025-07-13T18:18:49.593310"
     },
     {
       "name": "Unauthenticated Access - /dashboard/stats",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T18:06:39.628983"
+      "timestamp": "2025-07-13T18:18:50.625983"
     },
     {
       "name": "Unauthenticated Access - /subject-categories",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T18:06:39.648441"
+      "timestamp": "2025-07-13T18:18:50.667160"
     },
     {
       "name": "Create Category Without Auth",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T18:06:39.675768"
+      "timestamp": "2025-07-13T18:18:50.683312"
+    },
+    {
+      "name": "Task Creation",
+      "success": true,
+      "details": "Task created: 8866c1cd-2126-4e26-8338-699662dd3065",
+      "timestamp": "2025-07-13T18:18:50.782118"
+    },
+    {
+      "name": "Task Update",
+      "success": true,
+      "details": "Task updated successfully",
+      "timestamp": "2025-07-13T18:18:50.804737"
+    },
+    {
+      "name": "Task Delete",
+      "success": true,
+      "details": "Task deleted successfully",
+      "timestamp": "2025-07-13T18:18:50.825734"
+    },
+    {
+      "name": "Submission Creation",
+      "success": true,
+      "details": "Submission created: d9e6e981-79a4-46b1-99d9-3fa4409c36f6",
+      "timestamp": "2025-07-13T18:18:51.082552"
+    },
+    {
+      "name": "Get Submissions (Student)",
+      "success": true,
+      "details": "Retrieved 1 submissions",
+      "timestamp": "2025-07-13T18:18:51.103962"
+    },
+    {
+      "name": "Get Specific Submission",
+      "success": true,
+      "details": "Retrieved submission details",
+      "timestamp": "2025-07-13T18:18:51.124187"
+    },
+    {
+      "name": "Submission Feedback/Grading",
+      "success": true,
+      "details": "Grade: 95.0",
+      "timestamp": "2025-07-13T18:18:51.152457"
+    },
+    {
+      "name": "Resource Creation (Link)",
+      "success": true,
+      "details": "Link resource created: b621e616-5272-4883-a7bc-d067cdacd356",
+      "timestamp": "2025-07-13T18:18:51.207285"
+    },
+    {
+      "name": "Resource Creation (Document)",
+      "success": true,
+      "details": "Document resource created: 5216b7d1-0b27-4cd0-b25f-a55ab651c1c5",
+      "timestamp": "2025-07-13T18:18:51.228206"
+    },
+    {
+      "name": "Get All Resources",
+      "success": true,
+      "details": "Retrieved 2 resources",
+      "timestamp": "2025-07-13T18:18:51.287481"
+    },
+    {
+      "name": "Get Resources by Category",
+      "success": true,
+      "details": "Retrieved 2 resources for category",
+      "timestamp": "2025-07-13T18:18:51.305338"
+    },
+    {
+      "name": "Resource Update",
+      "success": true,
+      "details": "Resource updated successfully",
+      "timestamp": "2025-07-13T18:18:51.365004"
+    },
+    {
+      "name": "Resource Delete",
+      "success": true,
+      "details": "Resource deleted successfully",
+      "timestamp": "2025-07-13T18:18:51.428265"
+    },
+    {
+      "name": "Message Creation (Mentor to Student)",
+      "success": true,
+      "details": "Message created: 40ff4017-83ba-44e8-b218-afec48013d33",
+      "timestamp": "2025-07-13T18:18:51.543405"
+    },
+    {
+      "name": "Get Messages (Student)",
+      "success": true,
+      "details": "Retrieved 1 messages",
+      "timestamp": "2025-07-13T18:18:51.561525"
+    },
+    {
+      "name": "Get Specific Message",
+      "success": true,
+      "details": "Retrieved message details",
+      "timestamp": "2025-07-13T18:18:51.582996"
+    },
+    {
+      "name": "Mark Message as Read",
+      "success": true,
+      "details": "Message marked as read",
+      "timestamp": "2025-07-13T18:18:51.613192"
+    },
+    {
+      "name": "Reply Message (Student to Mentor)",
+      "success": true,
+      "details": "Reply sent: b7a0d941-403c-4836-8e89-04f577647204",
+      "timestamp": "2025-07-13T18:18:51.634100"
+    },
+    {
+      "name": "Student Progress Tracking",
+      "success": true,
+      "details": "Completion: 0.0%",
+      "timestamp": "2025-07-13T18:18:51.921389"
+    },
+    {
+      "name": "Progress Overview (Mentor)",
+      "success": false,
+      "details": "Response: {'student_id': 'overview', 'progress': []}",
+      "timestamp": "2025-07-13T18:18:51.939386"
+    },
+    {
+      "name": "Certificate Generation",
+      "success": true,
+      "details": "Certificate generated: e943eff5-f721-47e8-8226-cd08b510b426",
+      "timestamp": "2025-07-13T18:18:52.182740"
+    },
+    {
+      "name": "Get Certificates",
+      "success": true,
+      "details": "Retrieved 1 certificates",
+      "timestamp": "2025-07-13T18:18:52.200501"
+    },
+    {
+      "name": "Get Specific Certificate",
+      "success": true,
+      "details": "Retrieved certificate details",
+      "timestamp": "2025-07-13T18:18:52.218684"
+    },
+    {
+      "name": "Certificate Download",
+      "success": true,
+      "details": "PDF data length: 2788",
+      "timestamp": "2025-07-13T18:18:52.242556"
+    },
+    {
+      "name": "Student Access Denied - POST /subject-categories",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.261391"
+    },
+    {
+      "name": "Student Access Denied - POST /tasks",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.278500"
+    },
+    {
+      "name": "Student Access Denied - PUT /tasks/test-id",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.299104"
+    },
+    {
+      "name": "Student Access Denied - DELETE /tasks/test-id",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.318449"
+    },
+    {
+      "name": "Student Access Denied - POST /resources",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.337537"
+    },
+    {
+      "name": "Student Access Denied - PUT /resources/test-id",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.397473"
+    },
+    {
+      "name": "Student Access Denied - DELETE /resources/test-id",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.416019"
+    },
+    {
+      "name": "Student Access Denied - PUT /submissions/test-id",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.476826"
+    },
+    {
+      "name": "Student Access Denied - GET /progress/overview",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.497601"
+    },
+    {
+      "name": "Student Access Denied - POST /certificates/generate?student_id=test&project_id=test",
+      "success": true,
+      "details": "Access correctly denied",
+      "timestamp": "2025-07-13T18:18:52.515488"
     },
     {
       "name": "404 Error Handling",
       "success": true,
       "details": "Non-existent endpoint handled correctly",
-      "timestamp": "2025-07-13T18:06:44.575520"
+      "timestamp": "2025-07-13T18:18:52.534521"
     }
   ],
   "api_url": "https://30fd2b50-0308-4158-b46f-1f5cbb0a9968.preview.emergentagent.com/api",
-  "timestamp": "2025-07-13T18:06:44.575559"
+  "timestamp": "2025-07-13T18:18:52.534562"
 }
