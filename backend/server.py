@@ -13,6 +13,15 @@ from pathlib import Path
 import jwt
 import bcrypt
 import re
+import base64
+import io
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.colors import HexColor
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.styles import ParagraphStyle
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
