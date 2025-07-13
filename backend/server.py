@@ -609,6 +609,386 @@ async def create_task(
     
     return task_obj
 
+@api_router.put("/tasks/{task_id}", response_model=Task)
+async def update_task(
+    task_id: str,
+    task_update: TaskUpdate,
+    current_user: User = Depends(require_mentor)
+):
+    """Update a task (mentor only)"""
+    task = await db.tasks.find_one({"id": task_id})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in task_update.dict().items() if v is not None}
+    
+    await db.tasks.update_one(
+        {"id": task_id},
+        {"$set": update_data}
+    )
+    
+    updated_task = await db.tasks.find_one({"id": task_id})
+    return Task(**updated_task)
+
+@api_router.delete("/tasks/{task_id}")
+async def delete_task(
+    task_id: str,
+    current_user: User = Depends(require_mentor)
+):
+    """Delete a task (mentor only)"""
+    task = await db.tasks.find_one({"id": task_id})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    await db.tasks.delete_one({"id": task_id})
+    return {"message": "Task deleted successfully"}
+
+# Submissions CRUD
+@api_router.get("/submissions", response_model=List[Submission])
+async def get_submissions(
+    task_id: Optional[str] = None,
+    student_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get submissions"""
+    filter_dict = {}
+    
+    # Role-based filtering
+    if current_user.role == "student":
+        filter_dict["student_id"] = current_user.id
+    elif student_id:
+        filter_dict["student_id"] = student_id
+    
+    if task_id:
+        filter_dict["task_id"] = task_id
+    
+    submissions = await db.submissions.find(filter_dict).to_list(1000)
+    return [Submission(**submission) for submission in submissions]
+
+@api_router.post("/submissions", response_model=Submission)
+async def create_submission(
+    submission: SubmissionCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new submission"""
+    # Verify task exists
+    task = await db.tasks.find_one({"id": submission.task_id})
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Students can only submit for themselves
+    if current_user.role == "student":
+        submission_data = submission.dict()
+        submission_data["id"] = str(uuid.uuid4())
+        submission_data["student_id"] = current_user.id
+        submission_data["submitted_at"] = datetime.utcnow()
+        
+        submission_obj = Submission(**submission_data)
+        await db.submissions.insert_one(submission_obj.dict())
+        
+        return submission_obj
+    else:
+        raise HTTPException(status_code=403, detail="Only students can create submissions")
+
+@api_router.put("/submissions/{submission_id}", response_model=Submission)
+async def update_submission(
+    submission_id: str,
+    submission_update: SubmissionUpdate,
+    current_user: User = Depends(require_mentor)
+):
+    """Update a submission (mentor only - for feedback and grading)"""
+    submission = await db.submissions.find_one({"id": submission_id})
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in submission_update.dict().items() if v is not None}
+    update_data["reviewed_at"] = datetime.utcnow()
+    update_data["reviewed_by"] = current_user.id
+    
+    await db.submissions.update_one(
+        {"id": submission_id},
+        {"$set": update_data}
+    )
+    
+    updated_submission = await db.submissions.find_one({"id": submission_id})
+    return Submission(**updated_submission)
+
+@api_router.get("/submissions/{submission_id}", response_model=Submission)
+async def get_submission(
+    submission_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific submission"""
+    submission = await db.submissions.find_one({"id": submission_id})
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    
+    # Students can only view their own submissions
+    if current_user.role == "student" and submission["student_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return Submission(**submission)
+
+# Resources CRUD
+@api_router.get("/resources", response_model=List[Resource])
+async def get_resources(
+    subject_category_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get resources"""
+    filter_dict = {}
+    if subject_category_id:
+        filter_dict["subject_category_id"] = subject_category_id
+    
+    resources = await db.resources.find(filter_dict).to_list(1000)
+    return [Resource(**resource) for resource in resources]
+
+@api_router.post("/resources", response_model=Resource)
+async def create_resource(
+    resource: ResourceCreate,
+    current_user: User = Depends(require_mentor)
+):
+    """Create a new resource (mentor only)"""
+    # Verify subject category exists
+    category = await db.subject_categories.find_one({"id": resource.subject_category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Subject category not found")
+    
+    resource_data = resource.dict()
+    resource_data["id"] = str(uuid.uuid4())
+    resource_data["created_by"] = current_user.id
+    resource_data["created_at"] = datetime.utcnow()
+    
+    resource_obj = Resource(**resource_data)
+    await db.resources.insert_one(resource_obj.dict())
+    
+    return resource_obj
+
+@api_router.put("/resources/{resource_id}", response_model=Resource)
+async def update_resource(
+    resource_id: str,
+    resource_update: ResourceUpdate,
+    current_user: User = Depends(require_mentor)
+):
+    """Update a resource (mentor only)"""
+    resource = await db.resources.find_one({"id": resource_id})
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    # Check if current user created this resource
+    if resource["created_by"] != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only update resources you created")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in resource_update.dict().items() if v is not None}
+    
+    await db.resources.update_one(
+        {"id": resource_id},
+        {"$set": update_data}
+    )
+    
+    updated_resource = await db.resources.find_one({"id": resource_id})
+    return Resource(**updated_resource)
+
+@api_router.delete("/resources/{resource_id}")
+async def delete_resource(
+    resource_id: str,
+    current_user: User = Depends(require_mentor)
+):
+    """Delete a resource (mentor only)"""
+    resource = await db.resources.find_one({"id": resource_id})
+    if not resource:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    # Check if current user created this resource
+    if resource["created_by"] != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete resources you created")
+    
+    await db.resources.delete_one({"id": resource_id})
+    return {"message": "Resource deleted successfully"}
+
+# Messages CRUD
+@api_router.get("/messages", response_model=List[Message])
+async def get_messages(
+    project_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get messages"""
+    filter_dict = {
+        "$or": [
+            {"sender_id": current_user.id},
+            {"recipient_id": current_user.id}
+        ]
+    }
+    
+    if project_id:
+        filter_dict["project_id"] = project_id
+    
+    messages = await db.messages.find(filter_dict).to_list(1000)
+    return [Message(**message) for message in messages]
+
+@api_router.post("/messages", response_model=Message)
+async def create_message(
+    message: MessageCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new message"""
+    # Verify recipient exists
+    recipient = await db.users.find_one({"id": message.recipient_id})
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+    
+    # Verify project exists if specified
+    if message.project_id:
+        project = await db.projects.find_one({"id": message.project_id})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+    
+    message_data = message.dict()
+    message_data["id"] = str(uuid.uuid4())
+    message_data["sender_id"] = current_user.id
+    message_data["created_at"] = datetime.utcnow()
+    
+    message_obj = Message(**message_data)
+    await db.messages.insert_one(message_obj.dict())
+    
+    return message_obj
+
+@api_router.put("/messages/{message_id}", response_model=Message)
+async def update_message(
+    message_id: str,
+    message_update: MessageUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update a message (mark as read)"""
+    message = await db.messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Only recipient can mark message as read
+    if message["recipient_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only update messages sent to you")
+    
+    # Update only provided fields
+    update_data = {k: v for k, v in message_update.dict().items() if v is not None}
+    
+    await db.messages.update_one(
+        {"id": message_id},
+        {"$set": update_data}
+    )
+    
+    updated_message = await db.messages.find_one({"id": message_id})
+    return Message(**updated_message)
+
+@api_router.get("/messages/{message_id}", response_model=Message)
+async def get_message(
+    message_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific message"""
+    message = await db.messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Only sender or recipient can view message
+    if message["sender_id"] != current_user.id and message["recipient_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return Message(**message)
+
+@api_router.delete("/messages/{message_id}")
+async def delete_message(
+    message_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a message"""
+    message = await db.messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Only sender can delete message
+    if message["sender_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete messages you sent")
+    
+    await db.messages.delete_one({"id": message_id})
+    return {"message": "Message deleted successfully"}
+
+# Progress tracking endpoints
+@api_router.get("/progress/{student_id}")
+async def get_student_progress(
+    student_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get student progress"""
+    # Students can only view their own progress
+    if current_user.role == "student" and student_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get assigned projects for student
+    projects = await db.projects.find({"assigned_students": student_id}).to_list(1000)
+    
+    progress_data = []
+    for project in projects:
+        # Get tasks for this project
+        tasks = await db.tasks.find({"project_id": project["id"]}).to_list(1000)
+        
+        # Calculate completion percentage
+        total_tasks = len(tasks)
+        completed_tasks = len([task for task in tasks if task["status"] == "approved"])
+        completion_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        
+        # Get latest submission
+        latest_submission = await db.submissions.find_one(
+            {"student_id": student_id, "task_id": {"$in": [task["id"] for task in tasks]}},
+            sort=[("submitted_at", -1)]
+        )
+        
+        progress_data.append({
+            "project_id": project["id"],
+            "project_title": project["title"],
+            "subject_category_id": project["subject_category_id"],
+            "total_tasks": total_tasks,
+            "completed_tasks": completed_tasks,
+            "completion_percentage": completion_percentage,
+            "last_submission_date": latest_submission["submitted_at"] if latest_submission else None
+        })
+    
+    return {"student_id": student_id, "progress": progress_data}
+
+@api_router.get("/progress/overview")
+async def get_progress_overview(current_user: User = Depends(require_mentor)):
+    """Get overview of all students' progress (mentor only)"""
+    students = await db.users.find({"role": "student"}).to_list(1000)
+    
+    overview_data = []
+    for student in students:
+        # Get assigned projects for student
+        projects = await db.projects.find({"assigned_students": student["id"]}).to_list(1000)
+        
+        total_projects = len(projects)
+        completed_projects = 0
+        
+        for project in projects:
+            # Get tasks for this project
+            tasks = await db.tasks.find({"project_id": project["id"]}).to_list(1000)
+            
+            # Check if all tasks are completed
+            if tasks and all(task["status"] == "approved" for task in tasks):
+                completed_projects += 1
+        
+        overview_data.append({
+            "student_id": student["id"],
+            "student_name": student["name"],
+            "student_email": student["email"],
+            "total_projects": total_projects,
+            "completed_projects": completed_projects,
+            "completion_percentage": (completed_projects / total_projects * 100) if total_projects > 0 else 0
+        })
+    
+    return {"overview": overview_data}
+
 # Dashboard stats
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
