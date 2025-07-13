@@ -50,12 +50,14 @@ app.add_middleware(
 
 # Password validation function
 def validate_password(password: str) -> bool:
-    """Validate password strength - minimum 8 characters, at least one letter and one number"""
+    """Validate password strength - minimum 8 characters, at least one uppercase letter, one lowercase letter, and one number"""
     if len(password) < 8:
         return False
-    if not re.search(r'[A-Za-z]', password):
+    if not re.search(r'[A-Z]', password):  # At least one uppercase letter
         return False
-    if not re.search(r'[0-9]', password):
+    if not re.search(r'[a-z]', password):  # At least one lowercase letter
+        return False
+    if not re.search(r'[0-9]', password):  # At least one number
         return False
     return True
 
