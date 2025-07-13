@@ -419,7 +419,75 @@ class BuildBytesAPITester:
             self.log_test("Password Hashing - Wrong Password", False, f"Response: {response}")
             return False
 
-    def test_cors_headers(self) -> bool:
+    def test_unauthenticated_endpoints(self) -> bool:
+        """Test endpoints that should require authentication"""
+        print("\n🚫 Testing Unauthenticated Access...")
+        
+        endpoints_to_test = [
+            ('/me', 403),  # FastAPI HTTPBearer returns 403 for missing auth header
+            ('/dashboard/stats', 403),
+            ('/subject-categories', 403)
+        ]
+        
+        all_passed = True
+        for endpoint, expected_status in endpoints_to_test:
+            success, response = self.make_request('GET', endpoint, expected_status=expected_status)
+            test_name = f"Unauthenticated Access - {endpoint}"
+            
+            if success:
+                self.log_test(test_name, True, "Correctly rejected")
+            else:
+                self.log_test(test_name, False, f"Expected {expected_status}, got {response.get('status_code')}")
+                all_passed = False
+        
+        return all_passed
+
+    def test_subject_categories_crud_without_auth(self) -> bool:
+        """Test CRUD operations without authentication (should fail)"""
+        print("\n🔒 Testing CRUD Without Authentication...")
+        
+        test_category = {
+            "name": "Test Category",
+            "description": "Test Description",
+            "color": "#FF0000"
+        }
+        
+        # Test POST without auth - FastAPI HTTPBearer returns 403 for missing auth header
+        success, response = self.make_request('POST', '/subject-categories', 
+                                            data=test_category, expected_status=403)
+        
+        if success:
+            return self.log_test("Create Category Without Auth", True, "Correctly rejected")
+        else:
+            return self.log_test("Create Category Without Auth", False, f"Response: {response}")
+
+    def test_token_expiration_format(self) -> bool:
+        """Test JWT token format and expiration settings"""
+        print("\n⏰ Testing JWT Token Format...")
+        
+        if not self.test_users["mentor"]:
+            return self.log_test("Token Format", False, "No mentor user available for testing")
+        
+        token = self.test_users["mentor"]["token"]
+        
+        # Basic JWT format check (should have 3 parts separated by dots)
+        token_parts = token.split('.')
+        if len(token_parts) == 3:
+            self.log_test("JWT Token Format", True, "Token has correct JWT format (3 parts)")
+        else:
+            self.log_test("JWT Token Format", False, f"Token has {len(token_parts)} parts, expected 3")
+            return False
+        
+        # Test that token works immediately after creation
+        self.token = token
+        success, response = self.make_request('GET', '/me', expected_status=200, use_auth=True)
+        
+        if success:
+            self.log_test("JWT Token Validity", True, "Newly created token works correctly")
+            return True
+        else:
+            self.log_test("JWT Token Validity", False, f"Response: {response}")
+            return False
         """Test CORS configuration"""
         try:
             response = requests.options(f"{self.api_url}/", timeout=10)
