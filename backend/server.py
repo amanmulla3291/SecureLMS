@@ -998,6 +998,234 @@ async def get_progress_overview(current_user: User = Depends(require_mentor)):
     
     return {"overview": overview_data}
 
+# Certificate generation functions
+def generate_certificate_pdf(student_name: str, project_title: str, subject_category_name: str, completion_date: datetime) -> bytes:
+    """Generate a PDF certificate"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    
+    # Get styles
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CertificateTitle',
+        parent=styles['Title'],
+        fontSize=32,
+        alignment=TA_CENTER,
+        spaceAfter=30,
+        textColor=HexColor('#2E5A9C')
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CertificateSubtitle',
+        parent=styles['Heading2'],
+        fontSize=16,
+        alignment=TA_CENTER,
+        spaceAfter=20,
+        textColor=HexColor('#4A4A4A')
+    )
+    
+    body_style = ParagraphStyle(
+        'CertificateBody',
+        parent=styles['Normal'],
+        fontSize=14,
+        alignment=TA_CENTER,
+        spaceAfter=15,
+        textColor=HexColor('#333333')
+    )
+    
+    name_style = ParagraphStyle(
+        'StudentName',
+        parent=styles['Normal'],
+        fontSize=24,
+        alignment=TA_CENTER,
+        spaceAfter=20,
+        textColor=HexColor('#2E5A9C'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Build certificate content
+    story = []
+    
+    # Title
+    story.append(Paragraph("Certificate of Completion", title_style))
+    story.append(Spacer(1, 20))
+    
+    # Subtitle
+    story.append(Paragraph("BuildBytes LMS", subtitle_style))
+    story.append(Spacer(1, 30))
+    
+    # Body text
+    story.append(Paragraph("This is to certify that", body_style))
+    story.append(Spacer(1, 10))
+    
+    # Student name
+    story.append(Paragraph(student_name, name_style))
+    story.append(Spacer(1, 20))
+    
+    # Achievement text
+    story.append(Paragraph("has successfully completed the project", body_style))
+    story.append(Spacer(1, 10))
+    
+    # Project title
+    story.append(Paragraph(f"<b>{project_title}</b>", name_style))
+    story.append(Spacer(1, 10))
+    
+    # Subject category
+    story.append(Paragraph(f"in the subject category: <b>{subject_category_name}</b>", body_style))
+    story.append(Spacer(1, 30))
+    
+    # Completion date
+    story.append(Paragraph(f"Completed on: {completion_date.strftime('%B %d, %Y')}", body_style))
+    story.append(Spacer(1, 40))
+    
+    # Footer
+    story.append(Paragraph("BuildBytes Learning Management System", subtitle_style))
+    
+    # Build PDF
+    doc.build(story)
+    
+    # Get PDF bytes
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_bytes
+
+# Certificate endpoints
+@api_router.get("/certificates", response_model=List[Certificate])
+async def get_certificates(
+    student_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get certificates"""
+    filter_dict = {}
+    
+    # Role-based filtering
+    if current_user.role == "student":
+        filter_dict["student_id"] = current_user.id
+    elif student_id:
+        filter_dict["student_id"] = student_id
+    
+    certificates = await db.certificates.find(filter_dict).to_list(1000)
+    return [Certificate(**cert) for cert in certificates]
+
+@api_router.post("/certificates/generate", response_model=Certificate)
+async def generate_certificate(
+    student_id: str,
+    project_id: str,
+    current_user: User = Depends(require_mentor)
+):
+    """Generate a certificate for a student's completed project (mentor only)"""
+    # Verify student exists
+    student = await db.users.find_one({"id": student_id})
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Verify project exists
+    project = await db.projects.find_one({"id": project_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Verify student is assigned to the project
+    if student_id not in project.get("assigned_students", []):
+        raise HTTPException(status_code=400, detail="Student is not assigned to this project")
+    
+    # Get subject category
+    subject_category = await db.subject_categories.find_one({"id": project["subject_category_id"]})
+    if not subject_category:
+        raise HTTPException(status_code=404, detail="Subject category not found")
+    
+    # Check if all project tasks are completed
+    tasks = await db.tasks.find({"project_id": project_id}).to_list(1000)
+    if not tasks:
+        raise HTTPException(status_code=400, detail="Project has no tasks")
+    
+    incomplete_tasks = [task for task in tasks if task["status"] != "approved"]
+    if incomplete_tasks:
+        raise HTTPException(status_code=400, detail="Not all project tasks are completed")
+    
+    # Check if certificate already exists
+    existing_cert = await db.certificates.find_one({
+        "student_id": student_id,
+        "project_id": project_id
+    })
+    if existing_cert:
+        raise HTTPException(status_code=400, detail="Certificate already exists for this student and project")
+    
+    # Generate PDF certificate
+    try:
+        pdf_bytes = generate_certificate_pdf(
+            student_name=student["name"],
+            project_title=project["title"],
+            subject_category_name=subject_category["name"],
+            completion_date=datetime.utcnow()
+        )
+        
+        # Encode PDF to base64
+        pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+        
+        # Create certificate record
+        certificate_data = {
+            "id": str(uuid.uuid4()),
+            "student_id": student_id,
+            "project_id": project_id,
+            "student_name": student["name"],
+            "project_title": project["title"],
+            "subject_category_name": subject_category["name"],
+            "completion_date": datetime.utcnow(),
+            "generated_by": current_user.id,
+            "certificate_data": pdf_base64
+        }
+        
+        certificate_obj = Certificate(**certificate_data)
+        await db.certificates.insert_one(certificate_obj.dict())
+        
+        return certificate_obj
+        
+    except Exception as e:
+        logger.error(f"Error generating certificate: {e}")
+        raise HTTPException(status_code=500, detail="Error generating certificate")
+
+@api_router.get("/certificates/{certificate_id}", response_model=Certificate)
+async def get_certificate(
+    certificate_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific certificate"""
+    certificate = await db.certificates.find_one({"id": certificate_id})
+    if not certificate:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    
+    # Students can only view their own certificates
+    if current_user.role == "student" and certificate["student_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return Certificate(**certificate)
+
+@api_router.get("/certificates/{certificate_id}/download")
+async def download_certificate(
+    certificate_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Download certificate PDF"""
+    certificate = await db.certificates.find_one({"id": certificate_id})
+    if not certificate:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    
+    # Students can only download their own certificates
+    if current_user.role == "student" and certificate["student_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not certificate.get("certificate_data"):
+        raise HTTPException(status_code=404, detail="Certificate PDF not found")
+    
+    # Return the base64 encoded PDF data
+    return {
+        "certificate_data": certificate["certificate_data"],
+        "filename": f"certificate_{certificate['student_name']}_{certificate['project_title']}.pdf"
+    }
+
 # Dashboard stats
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
