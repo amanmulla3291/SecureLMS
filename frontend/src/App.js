@@ -812,6 +812,537 @@ function CategoryModal({ category, onClose, onSubmit }) {
   );
 }
 
+// Projects Component
+function Projects() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const { user } = useAuth();
+
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await axios.get(`${API}/projects`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProjects(response.data);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await axios.get(`${API}/subject-categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+    fetchCategories();
+  }, []);
+
+  const handleCreateProject = async (projectData) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      await axios.post(`${API}/projects`, projectData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShowCreateModal(false);
+      fetchProjects();
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
+  };
+
+  if (loading) return <Loading />;
+
+  return (
+    <div className="projects">
+      <div className="page-header">
+        <h1 className="page-title">
+          {user?.role === 'mentor' ? 'Projects' : 'My Projects'}
+        </h1>
+        {user?.role === 'mentor' && (
+          <button 
+            className="btn-primary"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <PlusIcon className="w-5 h-5" />
+            Add Project
+          </button>
+        )}
+      </div>
+
+      <div className="projects-grid">
+        {projects.map((project) => {
+          const category = categories.find(c => c.id === project.subject_category_id);
+          return (
+            <div key={project.id} className="project-card">
+              <div className="project-header">
+                <div 
+                  className="project-color"
+                  style={{ backgroundColor: category?.color || '#3B82F6' }}
+                ></div>
+                <h3>{project.title}</h3>
+              </div>
+              <p className="project-description">{project.description}</p>
+              <div className="project-meta">
+                <span className="project-category">{category?.name}</span>
+                <span className="project-students">
+                  {project.assigned_students?.length || 0} students
+                </span>
+              </div>
+              <div className="project-actions">
+                <button className="btn-secondary">View Details</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Create Project Modal */}
+      {showCreateModal && (
+        <ProjectModal
+          categories={categories}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateProject}
+        />
+      )}
+    </div>
+  );
+}
+
+// Project Modal Component
+function ProjectModal({ categories, onClose, onSubmit }) {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    subject_category_id: '',
+    assigned_students: []
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <div className="modal-header">
+          <h2>Create Project</h2>
+          <button onClick={onClose} className="modal-close">
+            <XMarkIcon className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="form-group">
+            <label>Project Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              rows="3"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Subject Category</label>
+            <select
+              value={formData.subject_category_id}
+              onChange={(e) => setFormData({...formData, subject_category_id: e.target.value})}
+              required
+            >
+              <option value="">Select Category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="form-actions">
+            <button type="button" onClick={onClose} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Students Component
+function Students() {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [progressData, setProgressData] = useState([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const response = await axios.get(`${API}/progress/overview`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setProgressData(response.data.overview);
+      } catch (error) {
+        console.error('Error fetching students:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  if (loading) return <Loading />;
+
+  return (
+    <div className="students">
+      <div className="page-header">
+        <h1 className="page-title">Students</h1>
+      </div>
+
+      <div className="students-table">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Email</th>
+              <th>Total Projects</th>
+              <th>Completed Projects</th>
+              <th>Progress</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {progressData.map((student) => (
+              <tr key={student.student_id}>
+                <td>{student.student_name}</td>
+                <td>{student.student_email}</td>
+                <td>{student.total_projects}</td>
+                <td>{student.completed_projects}</td>
+                <td>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ width: `${student.completion_percentage}%` }}
+                    ></div>
+                  </div>
+                  <span>{Math.round(student.completion_percentage)}%</span>
+                </td>
+                <td>
+                  <button className="btn-secondary btn-small">View Details</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Resources Component
+function Resources() {
+  const [resources, setResources] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const { user } = useAuth();
+
+  const fetchResources = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await axios.get(`${API}/resources`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setResources(response.data);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await axios.get(`${API}/subject-categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchResources();
+    fetchCategories();
+  }, []);
+
+  const handleCreateResource = async (resourceData) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      await axios.post(`${API}/resources`, resourceData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setShowCreateModal(false);
+      fetchResources();
+    } catch (error) {
+      console.error('Error creating resource:', error);
+    }
+  };
+
+  if (loading) return <Loading />;
+
+  return (
+    <div className="resources">
+      <div className="page-header">
+        <h1 className="page-title">Resources</h1>
+        {user?.role === 'mentor' && (
+          <button 
+            className="btn-primary"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <PlusIcon className="w-5 h-5" />
+            Add Resource
+          </button>
+        )}
+      </div>
+
+      <div className="resources-grid">
+        {resources.map((resource) => {
+          const category = categories.find(c => c.id === resource.subject_category_id);
+          return (
+            <div key={resource.id} className="resource-card">
+              <div className="resource-header">
+                <div className="resource-type-icon">
+                  {resource.resource_type === 'link' ? '🔗' : 
+                   resource.resource_type === 'pdf' ? '📄' : 
+                   resource.resource_type === 'video' ? '🎥' : '📄'}
+                </div>
+                <h3>{resource.title}</h3>
+              </div>
+              <p className="resource-description">{resource.description}</p>
+              <div className="resource-meta">
+                <span className="resource-category">{category?.name}</span>
+                <span className="resource-type">{resource.resource_type}</span>
+              </div>
+              <div className="resource-actions">
+                {resource.url ? (
+                  <a href={resource.url} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                    Open Resource
+                  </a>
+                ) : (
+                  <button className="btn-primary">Download</button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Create Resource Modal */}
+      {showCreateModal && (
+        <ResourceModal
+          categories={categories}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateResource}
+        />
+      )}
+    </div>
+  );
+}
+
+// Resource Modal Component
+function ResourceModal({ categories, onClose, onSubmit }) {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    subject_category_id: '',
+    resource_type: 'link',
+    url: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <div className="modal-header">
+          <h2>Add Resource</h2>
+          <button onClick={onClose} className="modal-close">
+            <XMarkIcon className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="modal-form">
+          <div className="form-group">
+            <label>Resource Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              rows="3"
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label>Subject Category</label>
+            <select
+              value={formData.subject_category_id}
+              onChange={(e) => setFormData({...formData, subject_category_id: e.target.value})}
+              required
+            >
+              <option value="">Select Category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="form-group">
+            <label>Resource Type</label>
+            <select
+              value={formData.resource_type}
+              onChange={(e) => setFormData({...formData, resource_type: e.target.value})}
+              required
+            >
+              <option value="link">Link</option>
+              <option value="pdf">PDF</option>
+              <option value="document">Document</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          
+          <div className="form-group">
+            <label>URL</label>
+            <input
+              type="url"
+              value={formData.url}
+              onChange={(e) => setFormData({...formData, url: e.target.value})}
+              placeholder="https://..."
+              required={formData.resource_type === 'link'}
+            />
+          </div>
+          
+          <div className="form-actions">
+            <button type="button" onClick={onClose} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              Add Resource
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Settings Component
+function Settings() {
+  const { user } = useAuth();
+  const { theme, toggleTheme } = React.useContext(ThemeContext);
+
+  return (
+    <div className="settings">
+      <div className="page-header">
+        <h1 className="page-title">Settings</h1>
+      </div>
+
+      <div className="settings-sections">
+        <div className="settings-section">
+          <h2>Appearance</h2>
+          <div className="setting-item">
+            <div className="setting-info">
+              <h3>Theme</h3>
+              <p>Choose your preferred theme</p>
+            </div>
+            <button onClick={toggleTheme} className="btn-secondary">
+              {theme === 'light' ? (
+                <>
+                  <MoonIcon className="w-5 h-5" />
+                  Switch to Dark
+                </>
+              ) : (
+                <>
+                  <SunIcon className="w-5 h-5" />
+                  Switch to Light
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Account Information</h2>
+          <div className="setting-item">
+            <div className="setting-info">
+              <h3>Name</h3>
+              <p>{user?.name}</p>
+            </div>
+          </div>
+          <div className="setting-item">
+            <div className="setting-info">
+              <h3>Email</h3>
+              <p>{user?.email}</p>
+            </div>
+          </div>
+          <div className="setting-item">
+            <div className="setting-info">
+              <h3>Role</h3>
+              <p className="capitalize">{user?.role}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Main App Component
 function AppContent() {
   const { user, loading } = useAuth();
