@@ -144,33 +144,65 @@ class BuildBytesAPITester:
         return True
 
     def test_password_validation(self) -> bool:
-        """Test password strength validation"""
+        """Test password strength validation with comprehensive test cases"""
         print("\n🔒 Testing Password Validation...")
         
-        test_cases = [
-            ("short", "Short password should fail", 400),
-            ("nouppercase123", "No uppercase should fail", 400),
-            ("NOLOWERCASE123", "No lowercase should fail", 400),
-            ("NoNumbers", "No numbers should fail", 400),
-            ("ValidPass123", "Valid password should pass", 200)
+        # Valid password test cases
+        valid_passwords = [
+            ("TestPass123", "Valid password with uppercase, lowercase, and numbers"),
+            ("MySecure1", "Valid password - minimum requirements met"),
+            ("ValidPass9", "Valid password - all requirements satisfied")
+        ]
+        
+        # Invalid password test cases
+        invalid_passwords = [
+            ("nouppercase123", "No uppercase letter - should fail"),
+            ("NOLOWERCASE123", "No lowercase letter - should fail"),
+            ("NoNumbers", "No numbers - should fail"),
+            ("Short1", "Too short (less than 8 characters) - should fail"),
+            ("ValidPassword", "No numbers - should fail"),
+            ("validpassword123", "No uppercase letter - should fail"),
+            ("VALIDPASSWORD123", "No lowercase letter - should fail")
         ]
         
         all_passed = True
-        for password, description, expected_status in test_cases:
+        
+        # Test valid passwords (should return 200)
+        print("  Testing VALID passwords...")
+        for password, description in valid_passwords:
             user_data = {
                 "name": "Test User",
-                "email": f"test_{int(time.time())}_{password}@test.com",
+                "email": f"valid_test_{int(time.time())}_{len(password)}@test.com",
                 "password": password,
                 "role": "student"
             }
             
             success, response = self.make_request('POST', '/auth/register', 
-                                                data=user_data, expected_status=expected_status)
+                                                data=user_data, expected_status=200)
+            
+            if success and response.get('access_token'):
+                self.log_test(f"Valid Password - {password}", True, description)
+            else:
+                self.log_test(f"Valid Password - {password}", False, f"Expected success but got: {response}")
+                all_passed = False
+        
+        # Test invalid passwords (should return 400)
+        print("  Testing INVALID passwords...")
+        for password, description in invalid_passwords:
+            user_data = {
+                "name": "Test User",
+                "email": f"invalid_test_{int(time.time())}_{len(password)}@test.com",
+                "password": password,
+                "role": "student"
+            }
+            
+            success, response = self.make_request('POST', '/auth/register', 
+                                                data=user_data, expected_status=400)
             
             if success:
-                self.log_test(f"Password Validation - {description}", True, "Validation working")
+                self.log_test(f"Invalid Password - {password}", True, description)
             else:
-                self.log_test(f"Password Validation - {description}", False, f"Response: {response}")
+                self.log_test(f"Invalid Password - {password}", False, f"Expected 400 error but got: {response}")
                 all_passed = False
         
         return all_passed
