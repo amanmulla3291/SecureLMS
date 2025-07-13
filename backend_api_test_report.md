@@ -2,7 +2,7 @@
 
 ## Test Summary
 **Date:** 2025-01-11  
-**API Endpoint:** https://2d8ac9fe-e181-496f-9168-6a056d2e549d.preview.emergentagent.com/api  
+**API Endpoint:** https://30fd2b50-0308-4158-b46f-1f5cbb0a9968.preview.emergentagent.com/api  
 **Total Tests:** 10  
 **Passed:** 10  
 **Failed:** 0  
