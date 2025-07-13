@@ -184,6 +184,101 @@ class TaskCreate(BaseModel):
     description: str
     deadline: Optional[datetime] = None
 
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    deadline: Optional[datetime] = None
+    status: Optional[str] = None
+
+class Submission(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    task_id: str
+    student_id: str
+    file_name: Optional[str] = None
+    file_data: Optional[str] = None  # Base64 encoded file data
+    file_type: Optional[str] = None
+    text_content: Optional[str] = None
+    feedback: Optional[str] = None
+    status: str = "submitted"  # submitted, approved, needs_revision
+    grade: Optional[float] = None
+    submitted_at: datetime = Field(default_factory=datetime.utcnow)
+    reviewed_at: Optional[datetime] = None
+    reviewed_by: Optional[str] = None  # mentor user id
+
+class SubmissionCreate(BaseModel):
+    task_id: str
+    file_name: Optional[str] = None
+    file_data: Optional[str] = None
+    file_type: Optional[str] = None
+    text_content: Optional[str] = None
+
+class SubmissionUpdate(BaseModel):
+    feedback: Optional[str] = None
+    status: Optional[str] = None
+    grade: Optional[float] = None
+
+class Resource(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    subject_category_id: str
+    title: str
+    description: str
+    resource_type: str  # "link", "pdf", "document", "video"
+    url: Optional[str] = None
+    file_name: Optional[str] = None
+    file_data: Optional[str] = None  # Base64 encoded file data
+    file_type: Optional[str] = None
+    created_by: str  # mentor user id
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ResourceCreate(BaseModel):
+    subject_category_id: str
+    title: str
+    description: str
+    resource_type: str
+    url: Optional[str] = None
+    file_name: Optional[str] = None
+    file_data: Optional[str] = None
+    file_type: Optional[str] = None
+
+class ResourceUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    resource_type: Optional[str] = None
+    url: Optional[str] = None
+    file_name: Optional[str] = None
+    file_data: Optional[str] = None
+    file_type: Optional[str] = None
+
+class Message(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    sender_id: str
+    recipient_id: str
+    project_id: Optional[str] = None
+    subject: str
+    content: str
+    is_read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MessageCreate(BaseModel):
+    recipient_id: str
+    project_id: Optional[str] = None
+    subject: str
+    content: str
+
+class MessageUpdate(BaseModel):
+    is_read: bool
+
+class Certificate(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    student_id: str
+    project_id: str
+    student_name: str
+    project_title: str
+    subject_category_name: str
+    completion_date: datetime = Field(default_factory=datetime.utcnow)
+    generated_by: str  # mentor user id
+    certificate_data: Optional[str] = None  # Base64 encoded PDF data
+
 # Authentication dependency
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current user from JWT token"""
