@@ -658,7 +658,7 @@ function AppContent() {
   if (isLoading) return <Loading />;
 
   if (!isAuthenticated) {
-    return <LoginButton />;
+    return <LandingPage />;
   }
 
   return (
