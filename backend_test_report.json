@@ -1,72 +1,72 @@
 {
   "test_summary": {
     "total_tests": 10,
-    "passed_tests": 3,
-    "failed_tests": 7,
-    "success_rate": 30.0
+    "passed_tests": 10,
+    "failed_tests": 0,
+    "success_rate": 100.0
   },
   "test_results": [
     {
       "name": "Health Check",
       "success": true,
       "details": "Version: 1.0.0",
-      "timestamp": "2025-07-13T17:17:45.539297"
+      "timestamp": "2025-07-13T17:20:02.043964"
     },
     {
       "name": "API Routing Structure",
       "success": true,
       "details": "API prefix working correctly",
-      "timestamp": "2025-07-13T17:17:45.598884"
+      "timestamp": "2025-07-13T17:20:02.059999"
     },
     {
       "name": "CORS Configuration",
       "success": true,
       "details": "CORS headers present or OPTIONS handled",
-      "timestamp": "2025-07-13T17:17:45.615876"
+      "timestamp": "2025-07-13T17:20:02.114206"
     },
     {
       "name": "Unauthenticated Access - /me",
-      "success": false,
-      "details": "Expected 401, got 403",
-      "timestamp": "2025-07-13T17:17:55.334905"
+      "success": true,
+      "details": "Correctly rejected",
+      "timestamp": "2025-07-13T17:20:02.132466"
     },
     {
       "name": "Unauthenticated Access - /dashboard/stats",
-      "success": false,
-      "details": "Expected 401, got None",
-      "timestamp": "2025-07-13T17:18:05.385919"
+      "success": true,
+      "details": "Correctly rejected",
+      "timestamp": "2025-07-13T17:20:02.152051"
     },
     {
       "name": "Unauthenticated Access - /subject-categories",
-      "success": false,
-      "details": "Expected 401, got 403",
-      "timestamp": "2025-07-13T17:18:05.430157"
+      "success": true,
+      "details": "Correctly rejected",
+      "timestamp": "2025-07-13T17:20:02.167683"
     },
     {
       "name": "Invalid Token Rejection",
-      "success": false,
-      "details": "Response: {'error': \"HTTPSConnectionPool(host='2d8ac9fe-e181-496f-9168-6a056d2e549d.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)\"}",
-      "timestamp": "2025-07-13T17:18:15.451117"
+      "success": true,
+      "details": "Auth validation working",
+      "timestamp": "2025-07-13T17:20:02.494715"
     },
     {
       "name": "Create Category Without Auth",
-      "success": false,
-      "details": "Response: {'detail': 'Not authenticated', 'status_code': 403, 'expected_status': 401}",
-      "timestamp": "2025-07-13T17:18:15.923497"
+      "success": true,
+      "details": "Correctly rejected",
+      "timestamp": "2025-07-13T17:20:02.512792"
     },
     {
       "name": "404 Error Handling",
-      "success": false,
-      "details": "Response: {'error': \"HTTPSConnectionPool(host='2d8ac9fe-e181-496f-9168-6a056d2e549d.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)\"}",
-      "timestamp": "2025-07-13T17:18:25.944422"
+      "success": true,
+      "details": "Non-existent endpoint handled correctly",
+      "timestamp": "2025-07-13T17:20:02.531735"
     },
     {
       "name": "Database Connection (Indirect)",
-      "success": false,
-      "details": "Unexpected response: {'detail': 'Not authenticated', 'status_code': 403, 'expected_status': 401}",
-      "timestamp": "2025-07-13T17:18:25.985655"
+      "success": true,
+      "details": "API responding correctly",
+      "timestamp": "2025-07-13T17:20:02.548460"
     }
   ],
   "api_url": "https://2d8ac9fe-e181-496f-9168-6a056d2e549d.preview.emergentagent.com/api",
-  "timestamp": "2025-07-13T17:18:25.985688"
+  "timestamp": "2025-07-13T17:20:02.548485"
 }
