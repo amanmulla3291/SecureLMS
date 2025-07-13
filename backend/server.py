@@ -13,7 +13,7 @@ from pathlib import Path
 import json
 from jose import JWTError, jwt
 import requests
-import aiofiles
+
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
