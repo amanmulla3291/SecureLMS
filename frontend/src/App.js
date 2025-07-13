@@ -1359,6 +1359,10 @@ function AppContent() {
         <Routes>
           <Route path="/dashboard" element={<DashboardStats />} />
           <Route path="/subjects" element={<SubjectCategories />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/students" element={<Students />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </DashboardLayout>
