@@ -1,19 +1,18 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, File, UploadFile, Form
-from fastapi.security import HTTPBearer
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import logging
 import uuid
 from pathlib import Path
-import json
-from jose import JWTError, jwt
-import requests
-
+import jwt
+import bcrypt
+import re
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
@@ -24,10 +23,10 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Auth0 configuration
-AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
-AUTH0_AUDIENCE = os.environ['AUTH0_AUDIENCE']
-AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
+# JWT configuration
+JWT_SECRET = os.environ['JWT_SECRET']
+JWT_ALGORITHM = os.environ['JWT_ALGORITHM']
+JWT_EXPIRATION_HOURS = int(os.environ['JWT_EXPIRATION_HOURS'])
 
 # Create FastAPI app
 app = FastAPI(title="BuildBytes LMS API")
@@ -49,14 +48,88 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Password validation function
+def validate_password(password: str) -> bool:
+    """Validate password strength - minimum 8 characters, at least one letter and one number"""
+    if len(password) < 8:
+        return False
+    if not re.search(r'[A-Za-z]', password):
+        return False
+    if not re.search(r'[0-9]', password):
+        return False
+    return True
+
+# Password hashing functions
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt"""
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    """Verify password against hash"""
+    password_bytes = password.encode('utf-8')
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
+
+# JWT token functions
+def create_access_token(user_id: str, email: str) -> str:
+    """Create JWT access token"""
+    payload = {
+        'user_id': user_id,
+        'email': email,
+        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_token(token: str) -> dict:
+    """Verify JWT token and return payload"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
 # Pydantic models
+class UserRegistration(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str = "student"  # Default role
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
     name: str
     role: str  # "mentor" or "student"
-    auth0_id: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str
+    created_at: datetime
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
 
 class SubjectCategory(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -109,64 +182,35 @@ class TaskCreate(BaseModel):
     description: str
     deadline: Optional[datetime] = None
 
-# Auth0 token verification
-async def get_current_user(token: str = Depends(security)):
+# Authentication dependency
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get current user from JWT token"""
     try:
-        # Get the signing key from Auth0
-        jwks_url = f"https://{AUTH0_DOMAIN}/.well-known/jwks.json"
-        jwks_response = requests.get(jwks_url)
-        jwks = jwks_response.json()
+        payload = verify_token(credentials.credentials)
+        user_id = payload.get('user_id')
         
-        # Decode the token without verification first to get the header
-        unverified_header = jwt.get_unverified_header(token.credentials)
-        
-        # Find the correct key
-        rsa_key = {}
-        for key in jwks["keys"]:
-            if key["kid"] == unverified_header["kid"]:
-                rsa_key = {
-                    "kty": key["kty"],
-                    "kid": key["kid"],
-                    "use": key["use"],
-                    "n": key["n"],
-                    "e": key["e"]
-                }
-        
-        if rsa_key:
-            # Verify and decode the token
-            payload = jwt.decode(
-                token.credentials,
-                rsa_key,
-                algorithms=["RS256"],
-                audience=AUTH0_AUDIENCE,
-                issuer=f"https://{AUTH0_DOMAIN}/"
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+                headers={"WWW-Authenticate": "Bearer"},
             )
-            
-            # Get user info from database or create if not exists
-            user_doc = await db.users.find_one({"auth0_id": payload["sub"]})
-            
-            if not user_doc:
-                # Create new user from Auth0 data
-                user_data = {
-                    "id": str(uuid.uuid4()),
-                    "email": payload.get("email", ""),
-                    "name": payload.get("name", ""),
-                    "role": "student",  # Default role
-                    "auth0_id": payload["sub"],
-                    "created_at": datetime.utcnow()
-                }
-                await db.users.insert_one(user_data)
-                user_doc = user_data
-            
-            return User(**user_doc)
         
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        # Get user from database
+        user_doc = await db.users.find_one({"id": user_id})
+        if not user_doc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         
-    except JWTError:
+        return User(**user_doc)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting current user: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -182,19 +226,120 @@ async def require_mentor(current_user: User = Depends(get_current_user)):
         )
     return current_user
 
+# Authentication routes
+@api_router.post("/auth/register", response_model=LoginResponse)
+async def register(user_data: UserRegistration):
+    """Register a new user"""
+    # Validate password strength
+    if not validate_password(user_data.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long and contain at least one letter and one number"
+        )
+    
+    # Validate role
+    if user_data.role not in ["mentor", "student"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role must be either 'mentor' or 'student'"
+        )
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User with this email already exists"
+        )
+    
+    # Create new user
+    user_id = str(uuid.uuid4())
+    hashed_password = hash_password(user_data.password)
+    
+    user_doc = {
+        "id": user_id,
+        "email": user_data.email,
+        "name": user_data.name,
+        "role": user_data.role,
+        "password": hashed_password,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.users.insert_one(user_doc)
+    
+    # Create access token
+    access_token = create_access_token(user_id, user_data.email)
+    
+    # Return response (exclude password from user response)
+    user_response = UserResponse(
+        id=user_id,
+        email=user_data.email,
+        name=user_data.name,
+        role=user_data.role,
+        created_at=user_doc["created_at"]
+    )
+    
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_response
+    )
+
+@api_router.post("/auth/login", response_model=LoginResponse)
+async def login(credentials: UserLogin):
+    """Login user"""
+    # Find user by email
+    user_doc = await db.users.find_one({"email": credentials.email})
+    if not user_doc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    # Verify password
+    if not verify_password(credentials.password, user_doc["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    # Create access token
+    access_token = create_access_token(user_doc["id"], user_doc["email"])
+    
+    # Return response (exclude password from user response)
+    user_response = UserResponse(
+        id=user_doc["id"],
+        email=user_doc["email"],
+        name=user_doc["name"],
+        role=user_doc["role"],
+        created_at=user_doc["created_at"]
+    )
+    
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_response
+    )
+
 # API Routes
 @api_router.get("/")
 async def root():
     return {"message": "BuildBytes LMS API", "version": "1.0.0"}
 
-@api_router.get("/me")
+@api_router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
-    return current_user
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        role=current_user.role,
+        created_at=current_user.created_at
+    )
 
 @api_router.post("/users/{user_id}/role")
 async def update_user_role(
     user_id: str,
-    role: str = Form(...),
+    role: str,
     current_user: User = Depends(require_mentor)
 ):
     """Update user role (mentor only)"""
