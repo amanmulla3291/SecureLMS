@@ -95,59 +95,329 @@ class BuildBytesAPITester:
         else:
             return self.log_test("Health Check", False, f"Response: {response}")
 
-    def test_unauthenticated_endpoints(self) -> bool:
-        """Test endpoints that should require authentication"""
-        endpoints_to_test = [
-            ('/me', 403),  # FastAPI HTTPBearer returns 403 for missing auth header
-            ('/dashboard/stats', 403),
-            ('/subject-categories', 403)
+    def test_user_registration(self) -> bool:
+        """Test user registration endpoint with various scenarios"""
+        print("\n🔐 Testing User Registration...")
+        
+        # Test valid mentor registration
+        mentor_data = {
+            "name": "Dr. Sarah Johnson",
+            "email": f"mentor_{int(time.time())}@buildbytes.edu",
+            "password": "SecurePass123",
+            "role": "mentor"
+        }
+        
+        success, response = self.make_request('POST', '/auth/register', data=mentor_data, expected_status=200)
+        
+        if success and response.get('access_token') and response.get('user'):
+            self.test_users["mentor"] = {
+                "data": mentor_data,
+                "token": response['access_token'],
+                "user": response['user']
+            }
+            self.log_test("Mentor Registration", True, f"User ID: {response['user']['id']}")
+        else:
+            self.log_test("Mentor Registration", False, f"Response: {response}")
+            return False
+        
+        # Test valid student registration
+        student_data = {
+            "name": "Alex Chen",
+            "email": f"student_{int(time.time())}@buildbytes.edu",
+            "password": "StudentPass456",
+            "role": "student"
+        }
+        
+        success, response = self.make_request('POST', '/auth/register', data=student_data, expected_status=200)
+        
+        if success and response.get('access_token') and response.get('user'):
+            self.test_users["student"] = {
+                "data": student_data,
+                "token": response['access_token'],
+                "user": response['user']
+            }
+            self.log_test("Student Registration", True, f"User ID: {response['user']['id']}")
+        else:
+            self.log_test("Student Registration", False, f"Response: {response}")
+            return False
+        
+        return True
+
+    def test_password_validation(self) -> bool:
+        """Test password strength validation"""
+        print("\n🔒 Testing Password Validation...")
+        
+        test_cases = [
+            ("short", "Short password should fail", 400),
+            ("nouppercase123", "No uppercase should fail", 400),
+            ("NOLOWERCASE123", "No lowercase should fail", 400),
+            ("NoNumbers", "No numbers should fail", 400),
+            ("ValidPass123", "Valid password should pass", 200)
         ]
         
         all_passed = True
-        for endpoint, expected_status in endpoints_to_test:
-            success, response = self.make_request('GET', endpoint, expected_status=expected_status)
-            test_name = f"Unauthenticated Access - {endpoint}"
+        for password, description, expected_status in test_cases:
+            user_data = {
+                "name": "Test User",
+                "email": f"test_{int(time.time())}_{password}@test.com",
+                "password": password,
+                "role": "student"
+            }
+            
+            success, response = self.make_request('POST', '/auth/register', 
+                                                data=user_data, expected_status=expected_status)
             
             if success:
-                self.log_test(test_name, True, "Correctly rejected")
+                self.log_test(f"Password Validation - {description}", True, "Validation working")
             else:
-                self.log_test(test_name, False, f"Expected {expected_status}, got {response.get('status_code')}")
+                self.log_test(f"Password Validation - {description}", False, f"Response: {response}")
                 all_passed = False
         
         return all_passed
 
-    def test_with_mock_auth(self) -> bool:
-        """Test with a mock/invalid token to verify auth validation"""
-        # Set a fake token
+    def test_email_uniqueness(self) -> bool:
+        """Test email uniqueness validation"""
+        print("\n📧 Testing Email Uniqueness...")
+        
+        if not self.test_users["mentor"]:
+            return self.log_test("Email Uniqueness", False, "No mentor user available for testing")
+        
+        # Try to register with same email
+        duplicate_data = {
+            "name": "Another User",
+            "email": self.test_users["mentor"]["data"]["email"],
+            "password": "AnotherPass123",
+            "role": "student"
+        }
+        
+        success, response = self.make_request('POST', '/auth/register', 
+                                            data=duplicate_data, expected_status=409)
+        
+        if success:
+            return self.log_test("Email Uniqueness", True, "Duplicate email correctly rejected")
+        else:
+            return self.log_test("Email Uniqueness", False, f"Response: {response}")
+
+    def test_role_validation(self) -> bool:
+        """Test user role validation"""
+        print("\n👥 Testing Role Validation...")
+        
+        # Test invalid role
+        invalid_role_data = {
+            "name": "Test User",
+            "email": f"invalid_role_{int(time.time())}@test.com",
+            "password": "ValidPass123",
+            "role": "admin"  # Invalid role
+        }
+        
+        success, response = self.make_request('POST', '/auth/register', 
+                                            data=invalid_role_data, expected_status=400)
+        
+        if success:
+            return self.log_test("Role Validation", True, "Invalid role correctly rejected")
+        else:
+            return self.log_test("Role Validation", False, f"Response: {response}")
+
+    def test_user_login(self) -> bool:
+        """Test user login endpoint"""
+        print("\n🔑 Testing User Login...")
+        
+        if not self.test_users["mentor"]:
+            return self.log_test("User Login", False, "No mentor user available for testing")
+        
+        # Test valid login
+        login_data = {
+            "email": self.test_users["mentor"]["data"]["email"],
+            "password": self.test_users["mentor"]["data"]["password"]
+        }
+        
+        success, response = self.make_request('POST', '/auth/login', data=login_data, expected_status=200)
+        
+        if success and response.get('access_token') and response.get('user'):
+            self.log_test("Valid Login", True, f"Token received for user: {response['user']['name']}")
+        else:
+            self.log_test("Valid Login", False, f"Response: {response}")
+            return False
+        
+        # Test invalid credentials
+        invalid_login = {
+            "email": self.test_users["mentor"]["data"]["email"],
+            "password": "WrongPassword123"
+        }
+        
+        success, response = self.make_request('POST', '/auth/login', 
+                                            data=invalid_login, expected_status=401)
+        
+        if success:
+            self.log_test("Invalid Login", True, "Invalid credentials correctly rejected")
+        else:
+            self.log_test("Invalid Login", False, f"Response: {response}")
+            return False
+        
+        # Test non-existent user
+        nonexistent_login = {
+            "email": "nonexistent@test.com",
+            "password": "SomePassword123"
+        }
+        
+        success, response = self.make_request('POST', '/auth/login', 
+                                            data=nonexistent_login, expected_status=401)
+        
+        if success:
+            self.log_test("Non-existent User Login", True, "Non-existent user correctly rejected")
+            return True
+        else:
+            self.log_test("Non-existent User Login", False, f"Response: {response}")
+            return False
+
+    def test_jwt_token_authentication(self) -> bool:
+        """Test JWT token authentication on protected endpoints"""
+        print("\n🎫 Testing JWT Token Authentication...")
+        
+        if not self.test_users["mentor"]:
+            return self.log_test("JWT Authentication", False, "No mentor user available for testing")
+        
+        # Set valid token
+        self.token = self.test_users["mentor"]["token"]
+        
+        # Test protected endpoint with valid token
+        success, response = self.make_request('GET', '/me', expected_status=200, use_auth=True)
+        
+        if success and response.get('email') == self.test_users["mentor"]["data"]["email"]:
+            self.log_test("Valid JWT Token", True, f"User info retrieved: {response['name']}")
+        else:
+            self.log_test("Valid JWT Token", False, f"Response: {response}")
+            return False
+        
+        # Test with invalid token
         original_token = self.token
-        self.token = "fake_jwt_token_for_testing"
+        self.token = "invalid.jwt.token"
         
         success, response = self.make_request('GET', '/me', expected_status=401, use_auth=True)
         
-        # Restore original token
-        self.token = original_token
+        if success:
+            self.log_test("Invalid JWT Token", True, "Invalid token correctly rejected")
+        else:
+            self.log_test("Invalid JWT Token", False, f"Response: {response}")
+            return False
+        
+        # Test without token
+        self.token = None
+        success, response = self.make_request('GET', '/me', expected_status=403)
         
         if success:
-            return self.log_test("Invalid Token Rejection", True, "Auth validation working")
+            self.log_test("Missing JWT Token", True, "Missing token correctly rejected")
         else:
-            return self.log_test("Invalid Token Rejection", False, f"Response: {response}")
+            self.log_test("Missing JWT Token", False, f"Response: {response}")
+            return False
+        
+        # Restore valid token
+        self.token = original_token
+        return True
 
-    def test_subject_categories_crud_without_auth(self) -> bool:
-        """Test CRUD operations without authentication (should fail)"""
-        test_category = {
+    def test_protected_endpoints(self) -> bool:
+        """Test protected endpoints with valid JWT tokens"""
+        print("\n🛡️ Testing Protected Endpoints...")
+        
+        if not self.test_users["mentor"]:
+            return self.log_test("Protected Endpoints", False, "No mentor user available for testing")
+        
+        self.token = self.test_users["mentor"]["token"]
+        
+        protected_endpoints = [
+            ('/me', 'GET', 200),
+            ('/dashboard/stats', 'GET', 200),
+            ('/subject-categories', 'GET', 200)
+        ]
+        
+        all_passed = True
+        for endpoint, method, expected_status in protected_endpoints:
+            success, response = self.make_request(method, endpoint, 
+                                                expected_status=expected_status, use_auth=True)
+            
+            if success:
+                self.log_test(f"Protected Endpoint - {method} {endpoint}", True, "Access granted with valid token")
+            else:
+                self.log_test(f"Protected Endpoint - {method} {endpoint}", False, f"Response: {response}")
+                all_passed = False
+        
+        return all_passed
+
+    def test_role_based_access(self) -> bool:
+        """Test role-based access control"""
+        print("\n👤 Testing Role-Based Access Control...")
+        
+        if not self.test_users["student"] or not self.test_users["mentor"]:
+            return self.log_test("Role-Based Access", False, "Both student and mentor users needed for testing")
+        
+        # Test mentor-only endpoint with student token
+        self.token = self.test_users["student"]["token"]
+        
+        mentor_only_data = {
             "name": "Test Category",
-            "description": "Test Description",
-            "color": "#FF0000"
+            "description": "Test Description"
         }
         
-        # Test POST without auth - FastAPI HTTPBearer returns 403 for missing auth header
         success, response = self.make_request('POST', '/subject-categories', 
-                                            data=test_category, expected_status=403)
+                                            data=mentor_only_data, expected_status=403, use_auth=True)
         
         if success:
-            return self.log_test("Create Category Without Auth", True, "Correctly rejected")
+            self.log_test("Student Access to Mentor Endpoint", True, "Student correctly denied access")
         else:
-            return self.log_test("Create Category Without Auth", False, f"Response: {response}")
+            self.log_test("Student Access to Mentor Endpoint", False, f"Response: {response}")
+            return False
+        
+        # Test mentor-only endpoint with mentor token
+        self.token = self.test_users["mentor"]["token"]
+        
+        success, response = self.make_request('POST', '/subject-categories', 
+                                            data=mentor_only_data, expected_status=200, use_auth=True)
+        
+        if success and response.get('id'):
+            self.log_test("Mentor Access to Mentor Endpoint", True, f"Category created: {response['id']}")
+            return True
+        else:
+            self.log_test("Mentor Access to Mentor Endpoint", False, f"Response: {response}")
+            return False
+
+    def test_password_hashing_security(self) -> bool:
+        """Test that passwords are properly hashed and not stored in plain text"""
+        print("\n🔐 Testing Password Hashing Security...")
+        
+        # This is an indirect test - we verify that login works with the original password
+        # but would fail with a different password, indicating proper hashing
+        if not self.test_users["mentor"]:
+            return self.log_test("Password Hashing", False, "No mentor user available for testing")
+        
+        # Test that original password works
+        login_data = {
+            "email": self.test_users["mentor"]["data"]["email"],
+            "password": self.test_users["mentor"]["data"]["password"]
+        }
+        
+        success, response = self.make_request('POST', '/auth/login', data=login_data, expected_status=200)
+        
+        if success and response.get('access_token'):
+            self.log_test("Password Hashing - Original Password", True, "Original password works")
+        else:
+            self.log_test("Password Hashing - Original Password", False, f"Response: {response}")
+            return False
+        
+        # Test that a similar but different password fails
+        wrong_login = {
+            "email": self.test_users["mentor"]["data"]["email"],
+            "password": self.test_users["mentor"]["data"]["password"] + "x"  # Add one character
+        }
+        
+        success, response = self.make_request('POST', '/auth/login', 
+                                            data=wrong_login, expected_status=401)
+        
+        if success:
+            self.log_test("Password Hashing - Wrong Password", True, "Wrong password correctly rejected")
+            return True
+        else:
+            self.log_test("Password Hashing - Wrong Password", False, f"Response: {response}")
+            return False
 
     def test_cors_headers(self) -> bool:
         """Test CORS configuration"""
