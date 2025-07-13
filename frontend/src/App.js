@@ -430,6 +430,7 @@ function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = React.useContext(ThemeContext);
+  const location = useLocation();
 
   const navigation = user?.role === 'mentor' 
     ? [
@@ -465,10 +466,15 @@ function DashboardLayout({ children }) {
         
         <nav className="sidebar-nav">
           {navigation.map((item) => (
-            <a key={item.name} href={item.href} className="sidebar-nav-item">
+            <Link 
+              key={item.name} 
+              to={item.href} 
+              className={`sidebar-nav-item ${location.pathname === item.href ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
+            >
               <item.icon className="sidebar-nav-icon" />
               {item.name}
-            </a>
+            </Link>
           ))}
         </nav>
         
