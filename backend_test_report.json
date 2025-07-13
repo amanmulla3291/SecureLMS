@@ -1,0 +1,72 @@
+{
+  "test_summary": {
+    "total_tests": 10,
+    "passed_tests": 4,
+    "failed_tests": 6,
+    "success_rate": 40.0
+  },
+  "test_results": [
+    {
+      "name": "Health Check",
+      "success": true,
+      "details": "Version: 1.0.0",
+      "timestamp": "2025-07-13T16:44:18.785024"
+    },
+    {
+      "name": "API Routing Structure",
+      "success": true,
+      "details": "API prefix working correctly",
+      "timestamp": "2025-07-13T16:44:19.738100"
+    },
+    {
+      "name": "CORS Configuration",
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='69c0f7a4-9e93-4ac4-ac56-e485692b5fd8.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
+      "timestamp": "2025-07-13T16:44:29.757276"
+    },
+    {
+      "name": "Unauthenticated Access - /me",
+      "success": false,
+      "details": "Expected 401, got 403",
+      "timestamp": "2025-07-13T16:44:30.996685"
+    },
+    {
+      "name": "Unauthenticated Access - /dashboard/stats",
+      "success": false,
+      "details": "Expected 401, got 403",
+      "timestamp": "2025-07-13T16:44:31.022475"
+    },
+    {
+      "name": "Unauthenticated Access - /subject-categories",
+      "success": false,
+      "details": "Expected 401, got 403",
+      "timestamp": "2025-07-13T16:44:31.041139"
+    },
+    {
+      "name": "Invalid Token Rejection",
+      "success": true,
+      "details": "Auth validation working",
+      "timestamp": "2025-07-13T16:44:31.336180"
+    },
+    {
+      "name": "Create Category Without Auth",
+      "success": false,
+      "details": "Response: {'detail': 'Not authenticated', 'status_code': 403, 'expected_status': 401}",
+      "timestamp": "2025-07-13T16:44:31.358214"
+    },
+    {
+      "name": "404 Error Handling",
+      "success": true,
+      "details": "Non-existent endpoint handled correctly",
+      "timestamp": "2025-07-13T16:44:31.419840"
+    },
+    {
+      "name": "Database Connection (Indirect)",
+      "success": false,
+      "details": "Unexpected response: {'detail': 'Not authenticated', 'status_code': 403, 'expected_status': 401}",
+      "timestamp": "2025-07-13T16:44:31.439770"
+    }
+  ],
+  "api_url": "https://69c0f7a4-9e93-4ac4-ac56-e485692b5fd8.preview.emergentagent.com/api",
+  "timestamp": "2025-07-13T16:44:31.439796"
+}
