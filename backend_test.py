@@ -487,8 +487,10 @@ class BuildBytesAPITester:
             return True
         else:
             self.log_test("JWT Token Validity", False, f"Response: {response}")
-            return False
+    def test_cors_headers(self) -> bool:
         """Test CORS configuration"""
+        print("\n🌐 Testing CORS Configuration...")
+        
         try:
             response = requests.options(f"{self.api_url}/", timeout=10)
             
@@ -511,6 +513,8 @@ class BuildBytesAPITester:
 
     def test_api_structure(self) -> bool:
         """Test API structure and routing"""
+        print("\n🏗️ Testing API Structure...")
+        
         # Test that /api prefix is working
         success, response = self.make_request('GET', '/')
         
@@ -521,6 +525,8 @@ class BuildBytesAPITester:
 
     def test_error_handling(self) -> bool:
         """Test error handling for non-existent endpoints"""
+        print("\n❌ Testing Error Handling...")
+        
         success, response = self.make_request('GET', '/non-existent-endpoint', expected_status=404)
         
         if success:
@@ -530,6 +536,8 @@ class BuildBytesAPITester:
 
     def test_database_connection(self) -> bool:
         """Test if the API can handle database-related operations (indirect test)"""
+        print("\n🗄️ Testing Database Connection...")
+        
         # This is an indirect test - we'll try to access an endpoint that requires DB
         # Without auth, it should fail with 403, not 500 (which would indicate DB issues)
         success, response = self.make_request('GET', '/subject-categories', expected_status=403)
@@ -545,21 +553,39 @@ class BuildBytesAPITester:
                 return self.log_test("Database Connection (Indirect)", False, f"Unexpected response: {response}")
 
     def run_all_tests(self) -> bool:
-        """Run all backend tests"""
-        print("🚀 Starting BuildBytes LMS Backend API Tests")
+        """Run all backend tests for manual authentication system"""
+        print("🚀 Starting BuildBytes LMS Backend API Tests - Manual Authentication System")
         print(f"📍 Testing API at: {self.api_url}")
-        print("=" * 60)
+        print("=" * 80)
         
         # Run tests in logical order
         test_methods = [
+            # Basic API tests
             self.test_health_check,
             self.test_api_structure,
             self.test_cors_headers,
+            self.test_database_connection,
+            
+            # Authentication system tests
+            self.test_user_registration,
+            self.test_password_validation,
+            self.test_email_uniqueness,
+            self.test_role_validation,
+            self.test_user_login,
+            
+            # JWT and security tests
+            self.test_jwt_token_authentication,
+            self.test_token_expiration_format,
+            self.test_password_hashing_security,
+            
+            # Protected endpoints tests
+            self.test_protected_endpoints,
+            self.test_role_based_access,
             self.test_unauthenticated_endpoints,
-            self.test_with_mock_auth,
             self.test_subject_categories_crud_without_auth,
-            self.test_error_handling,
-            self.test_database_connection
+            
+            # Error handling
+            self.test_error_handling
         ]
         
         for test_method in test_methods:
@@ -569,7 +595,7 @@ class BuildBytesAPITester:
                 self.log_test(f"Exception in {test_method.__name__}", False, str(e))
         
         # Print summary
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 80)
         print(f"📊 Test Summary: {self.tests_passed}/{self.tests_run} tests passed")
         
         if self.tests_passed == self.tests_run:
