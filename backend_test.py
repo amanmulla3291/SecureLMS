@@ -43,7 +43,7 @@ class BuildBytesAPITester:
         return success
 
     def make_request(self, method: str, endpoint: str, data: Dict = None, 
-                    expected_status: int = 200, use_auth: bool = False) -> tuple[bool, Dict]:
+                    expected_status: int = 200, use_auth: bool = False, timeout: int = 15) -> tuple[bool, Dict]:
         """Make HTTP request and validate response"""
         url = f"{self.api_url}/{endpoint.lstrip('/')}"
         headers = {'Content-Type': 'application/json'}
@@ -53,13 +53,13 @@ class BuildBytesAPITester:
         
         try:
             if method.upper() == 'GET':
-                response = requests.get(url, headers=headers, timeout=10)
+                response = requests.get(url, headers=headers, timeout=timeout)
             elif method.upper() == 'POST':
-                response = requests.post(url, json=data, headers=headers, timeout=10)
+                response = requests.post(url, json=data, headers=headers, timeout=timeout)
             elif method.upper() == 'PUT':
-                response = requests.put(url, json=data, headers=headers, timeout=10)
+                response = requests.put(url, json=data, headers=headers, timeout=timeout)
             elif method.upper() == 'DELETE':
-                response = requests.delete(url, headers=headers, timeout=10)
+                response = requests.delete(url, headers=headers, timeout=timeout)
             else:
                 return False, {"error": f"Unsupported method: {method}"}
 
@@ -76,6 +76,8 @@ class BuildBytesAPITester:
             
             return success, response_data
             
+        except requests.exceptions.Timeout:
+            return False, {"error": "Request timeout - API may be slow or unresponsive"}
         except requests.exceptions.RequestException as e:
             return False, {"error": str(e)}
 
