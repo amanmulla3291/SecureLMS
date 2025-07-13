@@ -1,210 +1,240 @@
 {
   "test_summary": {
-    "total_tests": 33,
-    "passed_tests": 31,
-    "failed_tests": 2,
-    "success_rate": 93.93939393939394
+    "total_tests": 38,
+    "passed_tests": 37,
+    "failed_tests": 1,
+    "success_rate": 97.36842105263158
   },
   "test_results": [
     {
       "name": "Health Check",
       "success": true,
       "details": "Version: 1.0.0",
-      "timestamp": "2025-07-13T17:40:01.499979"
+      "timestamp": "2025-07-13T18:06:11.532610"
     },
     {
       "name": "API Routing Structure",
       "success": true,
       "details": "API prefix working correctly",
-      "timestamp": "2025-07-13T17:40:01.555541"
+      "timestamp": "2025-07-13T18:06:11.591693"
     },
     {
       "name": "CORS Configuration",
-      "success": true,
-      "details": "CORS headers present or OPTIONS handled",
-      "timestamp": "2025-07-13T17:40:01.588034"
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='30fd2b50-0308-4158-b46f-1f5cbb0a9968.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
+      "timestamp": "2025-07-13T18:06:21.612477"
     },
     {
       "name": "Database Connection (Indirect)",
       "success": true,
       "details": "API responding correctly",
-      "timestamp": "2025-07-13T17:40:01.609470"
+      "timestamp": "2025-07-13T18:06:24.035216"
     },
     {
       "name": "Mentor Registration",
       "success": true,
-      "details": "User ID: fb5581d5-ccdf-4bb8-ace6-dde90bd74e44",
-      "timestamp": "2025-07-13T17:40:01.894438"
+      "details": "User ID: 0889a767-794d-4c19-a687-f21ee440eb6e",
+      "timestamp": "2025-07-13T18:06:24.773187"
     },
     {
       "name": "Student Registration",
       "success": true,
-      "details": "User ID: 1382e793-3f15-42ea-b1a5-195efe72f0ae",
-      "timestamp": "2025-07-13T17:40:02.149241"
+      "details": "User ID: 9877911c-a940-40bd-a632-197682be065e",
+      "timestamp": "2025-07-13T18:06:31.236391"
     },
     {
-      "name": "Password Validation - Short password should fail",
+      "name": "Valid Password - TestPass123",
       "success": true,
-      "details": "Validation working",
-      "timestamp": "2025-07-13T17:40:03.792789"
+      "details": "Valid password with uppercase, lowercase, and numbers",
+      "timestamp": "2025-07-13T18:06:31.525587"
     },
     {
-      "name": "Password Validation - No uppercase should fail",
-      "success": false,
-      "details": "Response: {'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZGIzZDI1MzgtYjdmNi00MDFmLThiNDgtMTc5NjNkMTg1N2YxIiwiZW1haWwiOiJ0ZXN0XzE3NTI0Mjg0MDNfbm91cHBlcmNhc2UxMjNAdGVzdC5jb20iLCJleHAiOjE3NTI1MTQ4MDQsImlhdCI6MTc1MjQyODQwNH0.1uZoPdPGoWxi2ozohuSB51m1XBLhCQZ_qYBmqjYosaI', 'token_type': 'bearer', 'user': {'id': 'db3d2538-b7f6-401f-8b48-17963d1857f1', 'email': 'test_1752428403_nouppercase123@test.com', 'name': 'Test User', 'role': 'student', 'created_at': '2025-07-13T17:40:04.041822'}, 'status_code': 200, 'expected_status': 400}",
-      "timestamp": "2025-07-13T17:40:04.086966"
-    },
-    {
-      "name": "Password Validation - No lowercase should fail",
-      "success": false,
-      "details": "Response: {'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOTRlODViNDYtNWU2NS00ZWMxLWFjZmItMmZhMzJmOTFlMDgyIiwiZW1haWwiOiJ0ZXN0XzE3NTI0Mjg0MDRfTk9MT1dFUkNBU0UxMjNAdGVzdC5jb20iLCJleHAiOjE3NTI1MTQ4MDQsImlhdCI6MTc1MjQyODQwNH0._HuVN7MONvopSN_c-VuATJpMY1qoWLZETSNcHwBxO_4', 'token_type': 'bearer', 'user': {'id': '94e85b46-5e65-4ec1-acfb-2fa32f91e082', 'email': 'test_1752428404_NOLOWERCASE123@test.com', 'name': 'Test User', 'role': 'student', 'created_at': '2025-07-13T17:40:04.334006'}, 'status_code': 200, 'expected_status': 400}",
-      "timestamp": "2025-07-13T17:40:04.338179"
-    },
-    {
-      "name": "Password Validation - No numbers should fail",
+      "name": "Valid Password - MySecure1",
       "success": true,
-      "details": "Validation working",
-      "timestamp": "2025-07-13T17:40:04.361617"
+      "details": "Valid password - minimum requirements met",
+      "timestamp": "2025-07-13T18:06:36.050830"
     },
     {
-      "name": "Password Validation - Valid password should pass",
+      "name": "Valid Password - ValidPass9",
       "success": true,
-      "details": "Validation working",
-      "timestamp": "2025-07-13T17:40:04.612409"
+      "details": "Valid password - all requirements satisfied",
+      "timestamp": "2025-07-13T18:06:37.379225"
+    },
+    {
+      "name": "Invalid Password - nouppercase123",
+      "success": true,
+      "details": "No uppercase letter - should fail",
+      "timestamp": "2025-07-13T18:06:37.430409"
+    },
+    {
+      "name": "Invalid Password - NOLOWERCASE123",
+      "success": true,
+      "details": "No lowercase letter - should fail",
+      "timestamp": "2025-07-13T18:06:37.964554"
+    },
+    {
+      "name": "Invalid Password - NoNumbers",
+      "success": true,
+      "details": "No numbers - should fail",
+      "timestamp": "2025-07-13T18:06:37.983068"
+    },
+    {
+      "name": "Invalid Password - Short1",
+      "success": true,
+      "details": "Too short (less than 8 characters) - should fail",
+      "timestamp": "2025-07-13T18:06:38.017360"
+    },
+    {
+      "name": "Invalid Password - ValidPassword",
+      "success": true,
+      "details": "No numbers - should fail",
+      "timestamp": "2025-07-13T18:06:38.037037"
+    },
+    {
+      "name": "Invalid Password - validpassword123",
+      "success": true,
+      "details": "No uppercase letter - should fail",
+      "timestamp": "2025-07-13T18:06:38.054572"
+    },
+    {
+      "name": "Invalid Password - VALIDPASSWORD123",
+      "success": true,
+      "details": "No lowercase letter - should fail",
+      "timestamp": "2025-07-13T18:06:38.076487"
     },
     {
       "name": "Email Uniqueness",
       "success": true,
       "details": "Duplicate email correctly rejected",
-      "timestamp": "2025-07-13T17:40:04.634186"
+      "timestamp": "2025-07-13T18:06:38.099421"
     },
     {
       "name": "Role Validation",
       "success": true,
       "details": "Invalid role correctly rejected",
-      "timestamp": "2025-07-13T17:40:04.650070"
+      "timestamp": "2025-07-13T18:06:38.117572"
     },
     {
       "name": "Valid Login",
       "success": true,
       "details": "Token received for user: Dr. Sarah Johnson",
-      "timestamp": "2025-07-13T17:40:08.556562"
+      "timestamp": "2025-07-13T18:06:38.366942"
     },
     {
       "name": "Invalid Login",
       "success": true,
       "details": "Invalid credentials correctly rejected",
-      "timestamp": "2025-07-13T17:40:09.845235"
+      "timestamp": "2025-07-13T18:06:38.621230"
     },
     {
       "name": "Non-existent User Login",
       "success": true,
       "details": "Non-existent user correctly rejected",
-      "timestamp": "2025-07-13T17:40:09.905648"
+      "timestamp": "2025-07-13T18:06:38.641841"
     },
     {
       "name": "Valid JWT Token",
       "success": true,
       "details": "User info retrieved: Dr. Sarah Johnson",
-      "timestamp": "2025-07-13T17:40:09.923184"
+      "timestamp": "2025-07-13T18:06:38.701736"
     },
     {
       "name": "Invalid JWT Token",
       "success": true,
       "details": "Invalid token correctly rejected",
-      "timestamp": "2025-07-13T17:40:09.978232"
+      "timestamp": "2025-07-13T18:06:38.720744"
     },
     {
       "name": "Missing JWT Token",
       "success": true,
       "details": "Missing token correctly rejected",
-      "timestamp": "2025-07-13T17:40:09.995659"
+      "timestamp": "2025-07-13T18:06:38.742958"
     },
     {
       "name": "JWT Token Format",
       "success": true,
       "details": "Token has correct JWT format (3 parts)",
-      "timestamp": "2025-07-13T17:40:09.995680"
+      "timestamp": "2025-07-13T18:06:38.742982"
     },
     {
       "name": "JWT Token Validity",
       "success": true,
       "details": "Newly created token works correctly",
-      "timestamp": "2025-07-13T17:40:10.013840"
+      "timestamp": "2025-07-13T18:06:38.763898"
     },
     {
       "name": "Password Hashing - Original Password",
       "success": true,
       "details": "Original password works",
-      "timestamp": "2025-07-13T17:40:10.260525"
+      "timestamp": "2025-07-13T18:06:39.017183"
     },
     {
       "name": "Password Hashing - Wrong Password",
       "success": true,
       "details": "Wrong password correctly rejected",
-      "timestamp": "2025-07-13T17:40:10.516423"
+      "timestamp": "2025-07-13T18:06:39.284811"
     },
     {
       "name": "Protected Endpoint - GET /me",
       "success": true,
       "details": "Access granted with valid token",
-      "timestamp": "2025-07-13T17:40:10.535603"
+      "timestamp": "2025-07-13T18:06:39.307499"
     },
     {
       "name": "Protected Endpoint - GET /dashboard/stats",
       "success": true,
       "details": "Access granted with valid token",
-      "timestamp": "2025-07-13T17:40:10.556563"
+      "timestamp": "2025-07-13T18:06:39.329666"
     },
     {
       "name": "Protected Endpoint - GET /subject-categories",
       "success": true,
       "details": "Access granted with valid token",
-      "timestamp": "2025-07-13T17:40:10.618882"
+      "timestamp": "2025-07-13T18:06:39.389305"
     },
     {
       "name": "Student Access to Mentor Endpoint",
       "success": true,
       "details": "Student correctly denied access",
-      "timestamp": "2025-07-13T17:40:10.635221"
+      "timestamp": "2025-07-13T18:06:39.406225"
     },
     {
       "name": "Mentor Access to Mentor Endpoint",
       "success": true,
-      "details": "Category created: ef49392c-94df-4abf-ba87-b2e228d41588",
-      "timestamp": "2025-07-13T17:40:10.705745"
+      "details": "Category created: f03bb139-b8c5-40c0-9647-421c83c7f66a",
+      "timestamp": "2025-07-13T18:06:39.595281"
     },
     {
       "name": "Unauthenticated Access - /me",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T17:40:12.491159"
+      "timestamp": "2025-07-13T18:06:39.613041"
     },
     {
       "name": "Unauthenticated Access - /dashboard/stats",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T17:40:12.510355"
+      "timestamp": "2025-07-13T18:06:39.628983"
     },
     {
       "name": "Unauthenticated Access - /subject-categories",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T17:40:12.570103"
+      "timestamp": "2025-07-13T18:06:39.648441"
     },
     {
       "name": "Create Category Without Auth",
       "success": true,
       "details": "Correctly rejected",
-      "timestamp": "2025-07-13T17:40:12.585994"
+      "timestamp": "2025-07-13T18:06:39.675768"
     },
     {
       "name": "404 Error Handling",
       "success": true,
       "details": "Non-existent endpoint handled correctly",
-      "timestamp": "2025-07-13T17:40:12.643536"
+      "timestamp": "2025-07-13T18:06:44.575520"
     }
   ],
   "api_url": "https://30fd2b50-0308-4158-b46f-1f5cbb0a9968.preview.emergentagent.com/api",
-  "timestamp": "2025-07-13T17:40:12.643564"
+  "timestamp": "2025-07-13T18:06:44.575559"
 }
