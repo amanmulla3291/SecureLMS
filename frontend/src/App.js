@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { 
   PlusIcon, 
@@ -14,18 +13,102 @@ import {
   AcademicCapIcon,
   ChartBarIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  EyeIcon,
+  EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import './App.css';
 
-// Auth0 configuration
-const AUTH0_DOMAIN = "buildbytes.ca.auth0.com";
-const AUTH0_CLIENT_ID = "zzgtGuezK2uzC4ONnqjjSN6F5LBaJgi1";
-const AUTH0_AUDIENCE = "https://buildbytes-api.com";
-
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Auth Context
+const AuthContext = createContext();
+
+// Auth Provider
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if user is logged in on app start
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      // Verify token and get user info
+      fetchUserInfo(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUserInfo = async (token) => {
+    try {
+      const response = await axios.get(`${API}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(response.data);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      localStorage.removeItem('auth_token');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email, password) => {
+    const response = await axios.post(`${API}/auth/login`, {
+      email,
+      password
+    });
+    
+    const { access_token, user: userData } = response.data;
+    localStorage.setItem('auth_token', access_token);
+    setUser(userData);
+    return userData;
+  };
+
+  const register = async (name, email, password, role = 'student') => {
+    const response = await axios.post(`${API}/auth/register`, {
+      name,
+      email,
+      password,
+      role
+    });
+    
+    const { access_token, user: userData } = response.data;
+    localStorage.setItem('auth_token', access_token);
+    setUser(userData);
+    return userData;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    login,
+    register,
+    logout,
+    loading
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 // Theme Context
 const ThemeContext = React.createContext();
@@ -64,10 +147,158 @@ function Loading() {
   );
 }
 
+// Auth Form Component
+function AuthForm() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'student'
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login, register } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await login(formData.email, formData.password);
+      } else {
+        await register(formData.name, formData.email, formData.password, formData.role);
+      }
+    } catch (error) {
+      setError(error.response?.data?.detail || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  return (
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <AcademicCapIcon className="auth-icon" />
+          <h1>BuildBytes LMS</h1>
+          <p>Learning Management System for Technical Projects</p>
+        </div>
+
+        <div className="auth-tabs">
+          <button
+            className={`auth-tab ${isLogin ? 'active' : ''}`}
+            onClick={() => setIsLogin(true)}
+          >
+            Sign In
+          </button>
+          <button
+            className={`auth-tab ${!isLogin ? 'active' : ''}`}
+            onClick={() => setIsLogin(false)}
+          >
+            Sign Up
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          {error && <div className="error-message">{error}</div>}
+          
+          {!isLogin && (
+            <div className="form-group">
+              <label>Full Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required={!isLogin}
+                placeholder="Enter your full name"
+              />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Password</label>
+            <div className="password-input">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder={isLogin ? "Enter your password" : "Min 8 chars, 1 letter, 1 number"}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          {!isLogin && (
+            <div className="form-group">
+              <label>Role</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="student">Student</option>
+                <option value="mentor">Mentor</option>
+              </select>
+            </div>
+          )}
+
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          <p>
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <button
+              type="button"
+              className="auth-link"
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? 'Sign Up' : 'Sign In'}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Landing Page Component
 function LandingPage() {
-  const { loginWithRedirect } = useAuth0();
-  
   return (
     <div className="landing-page">
       {/* Hero Section */}
@@ -111,41 +342,7 @@ function LandingPage() {
           </div>
           
           <div className="hero-auth">
-            <div className="auth-card">
-              <h2>Get Started Today</h2>
-              <p>Join thousands of learners and mentors</p>
-              
-              <div className="auth-buttons">
-                <button 
-                  onClick={() => loginWithRedirect({ screen_hint: 'signup' })}
-                  className="auth-button auth-button-primary"
-                >
-                  Create Account
-                </button>
-                <button 
-                  onClick={() => loginWithRedirect()}
-                  className="auth-button auth-button-secondary"
-                >
-                  Sign In
-                </button>
-              </div>
-              
-              <div className="auth-divider">
-                <span>or</span>
-              </div>
-              
-              <div className="demo-info">
-                <p className="demo-text">
-                  Want to explore first? 
-                  <button 
-                    onClick={() => loginWithRedirect()}
-                    className="demo-link"
-                  >
-                    Try Demo
-                  </button>
-                </p>
-              </div>
-            </div>
+            <AuthForm />
           </div>
         </div>
       </section>
@@ -210,30 +407,6 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="cta-section">
-        <div className="container">
-          <div className="cta-content">
-            <h2>Ready to Start Learning?</h2>
-            <p>Join our community of learners and mentors today</p>
-            <div className="cta-buttons">
-              <button 
-                onClick={() => loginWithRedirect({ screen_hint: 'signup' })}
-                className="cta-button cta-button-primary"
-              >
-                Get Started Free
-              </button>
-              <button 
-                onClick={() => loginWithRedirect()}
-                className="cta-button cta-button-secondary"
-              >
-                Sign In
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="landing-footer">
         <div className="container">
@@ -255,27 +428,10 @@ function LandingPage() {
 // Main Dashboard Layout
 function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const { logout, getAccessTokenSilently } = useAuth0();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = React.useContext(ThemeContext);
 
-  // Fetch current user info
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        const response = await axios.get(`${API}/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setCurrentUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      }
-    };
-    fetchUser();
-  }, [getAccessTokenSilently]);
-
-  const navigation = currentUser?.role === 'mentor' 
+  const navigation = user?.role === 'mentor' 
     ? [
         { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
         { name: 'Subject Categories', href: '/subjects', icon: BookOpenIcon },
@@ -319,12 +475,12 @@ function DashboardLayout({ children }) {
         <div className="sidebar-footer">
           <div className="sidebar-user">
             <div className="sidebar-user-info">
-              <p className="sidebar-user-name">{currentUser?.name}</p>
-              <p className="sidebar-user-role">{currentUser?.role}</p>
+              <p className="sidebar-user-name">{user?.name}</p>
+              <p className="sidebar-user-role">{user?.role}</p>
             </div>
           </div>
           <button 
-            onClick={() => logout({ returnTo: window.location.origin })}
+            onClick={logout}
             className="sidebar-logout"
           >
             Logout
@@ -366,12 +522,12 @@ function DashboardLayout({ children }) {
 function DashboardStats() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { getAccessTokenSilently } = useAuth0();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = await getAccessTokenSilently();
+        const token = localStorage.getItem('auth_token');
         const response = await axios.get(`${API}/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -383,7 +539,7 @@ function DashboardStats() {
       }
     };
     fetchStats();
-  }, [getAccessTokenSilently]);
+  }, []);
 
   if (loading) return <Loading />;
 
@@ -455,11 +611,10 @@ function SubjectCategories() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const { getAccessTokenSilently } = useAuth0();
 
   const fetchCategories = async () => {
     try {
-      const token = await getAccessTokenSilently();
+      const token = localStorage.getItem('auth_token');
       const response = await axios.get(`${API}/subject-categories`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -473,11 +628,11 @@ function SubjectCategories() {
 
   useEffect(() => {
     fetchCategories();
-  }, [getAccessTokenSilently]);
+  }, []);
 
   const handleCreateCategory = async (categoryData) => {
     try {
-      const token = await getAccessTokenSilently();
+      const token = localStorage.getItem('auth_token');
       await axios.post(`${API}/subject-categories`, categoryData, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -490,7 +645,7 @@ function SubjectCategories() {
 
   const handleUpdateCategory = async (categoryId, categoryData) => {
     try {
-      const token = await getAccessTokenSilently();
+      const token = localStorage.getItem('auth_token');
       await axios.put(`${API}/subject-categories/${categoryId}`, categoryData, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -504,7 +659,7 @@ function SubjectCategories() {
   const handleDeleteCategory = async (categoryId) => {
     if (window.confirm('Are you sure you want to delete this category?')) {
       try {
-        const token = await getAccessTokenSilently();
+        const token = localStorage.getItem('auth_token');
         await axios.delete(`${API}/subject-categories/${categoryId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -653,11 +808,11 @@ function CategoryModal({ category, onClose, onSubmit }) {
 
 // Main App Component
 function AppContent() {
-  const { isLoading, isAuthenticated } = useAuth0();
+  const { user, loading } = useAuth();
 
-  if (isLoading) return <Loading />;
+  if (loading) return <Loading />;
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <LandingPage />;
   }
 
@@ -676,20 +831,13 @@ function AppContent() {
 
 function App() {
   return (
-    <Auth0Provider
-      domain={AUTH0_DOMAIN}
-      clientId={AUTH0_CLIENT_ID}
-      authorizationParams={{
-        redirect_uri: window.location.origin,
-        audience: AUTH0_AUDIENCE,
-      }}
-    >
-      <ThemeProvider>
+    <ThemeProvider>
+      <AuthProvider>
         <div className="App">
           <AppContent />
         </div>
-      </ThemeProvider>
-    </Auth0Provider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
