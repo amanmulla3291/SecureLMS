@@ -64,25 +64,190 @@ function Loading() {
   );
 }
 
-// Login component
-function LoginButton() {
+// Landing Page Component
+function LandingPage() {
   const { loginWithRedirect } = useAuth0();
-
+  
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <AcademicCapIcon className="login-icon" />
-          <h1>BuildBytes LMS</h1>
-          <p>Learning Management System for Technical Projects</p>
+    <div className="landing-page">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-background">
+          <img 
+            src="https://images.unsplash.com/photo-1530825894095-9c184b068fcb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzd8MHwxfHNlYXJjaHwyfHxsZWFybmluZ3xlbnwwfHx8Ymx1ZXwxNzUyMzk2NTEzfDA&ixlib=rb-4.1.0&q=85"
+            alt="Modern Learning Technology"
+            className="hero-image"
+          />
+          <div className="hero-overlay"></div>
         </div>
-        <button 
-          onClick={() => loginWithRedirect()} 
-          className="login-button"
-        >
-          Login to Continue
-        </button>
-      </div>
+        
+        <div className="hero-content">
+          <div className="hero-text">
+            <div className="hero-badge">
+              <AcademicCapIcon className="hero-badge-icon" />
+              <span>BuildBytes LMS</span>
+            </div>
+            <h1 className="hero-title">
+              Transform Your Learning Experience
+            </h1>
+            <p className="hero-subtitle">
+              A modern Learning Management System designed for technical projects, 
+              collaborative learning, and professional development.
+            </p>
+            <div className="hero-features">
+              <div className="feature-item">
+                <BookOpenIcon className="feature-icon" />
+                <span>Interactive Projects</span>
+              </div>
+              <div className="feature-item">
+                <UserGroupIcon className="feature-icon" />
+                <span>Collaborative Learning</span>
+              </div>
+              <div className="feature-item">
+                <ChartBarIcon className="feature-icon" />
+                <span>Progress Tracking</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="hero-auth">
+            <div className="auth-card">
+              <h2>Get Started Today</h2>
+              <p>Join thousands of learners and mentors</p>
+              
+              <div className="auth-buttons">
+                <button 
+                  onClick={() => loginWithRedirect({ screen_hint: 'signup' })}
+                  className="auth-button auth-button-primary"
+                >
+                  Create Account
+                </button>
+                <button 
+                  onClick={() => loginWithRedirect()}
+                  className="auth-button auth-button-secondary"
+                >
+                  Sign In
+                </button>
+              </div>
+              
+              <div className="auth-divider">
+                <span>or</span>
+              </div>
+              
+              <div className="demo-info">
+                <p className="demo-text">
+                  Want to explore first? 
+                  <button 
+                    onClick={() => loginWithRedirect()}
+                    className="demo-link"
+                  >
+                    Try Demo
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="features-section">
+        <div className="container">
+          <div className="features-header">
+            <h2>Why Choose BuildBytes LMS?</h2>
+            <p>Everything you need to manage learning and projects effectively</p>
+          </div>
+          
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-card-icon">
+                <BookOpenIcon className="w-8 h-8" />
+              </div>
+              <h3>Subject Categories</h3>
+              <p>Organize learning materials into structured categories for easy navigation and management.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-card-icon">
+                <ChartBarIcon className="w-8 h-8" />
+              </div>
+              <h3>Project Management</h3>
+              <p>Create, assign, and track projects with detailed task management and progress monitoring.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-card-icon">
+                <UserGroupIcon className="w-8 h-8" />
+              </div>
+              <h3>Role-Based Access</h3>
+              <p>Separate interfaces for mentors and students with appropriate permissions and features.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-card-icon">
+                <AcademicCapIcon className="w-8 h-8" />
+              </div>
+              <h3>Task Tracking</h3>
+              <p>Monitor assignment progress with status updates, submissions, and feedback systems.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-card-icon">
+                <CogIcon className="w-8 h-8" />
+              </div>
+              <h3>Customizable</h3>
+              <p>Personalize your learning environment with themes, settings, and custom configurations.</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-card-icon">
+                <HomeIcon className="w-8 h-8" />
+              </div>
+              <h3>Analytics Dashboard</h3>
+              <p>Comprehensive insights into learning progress, project completion, and performance metrics.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Start Learning?</h2>
+            <p>Join our community of learners and mentors today</p>
+            <div className="cta-buttons">
+              <button 
+                onClick={() => loginWithRedirect({ screen_hint: 'signup' })}
+                className="cta-button cta-button-primary"
+              >
+                Get Started Free
+              </button>
+              <button 
+                onClick={() => loginWithRedirect()}
+                className="cta-button cta-button-secondary"
+              >
+                Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="landing-footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-logo">
+              <AcademicCapIcon className="footer-logo-icon" />
+              <span>BuildBytes LMS</span>
+            </div>
+            <p className="footer-tagline">
+              Empowering learners through technology and collaboration
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
