@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-BuildBytes LMS Backend API Testing Suite
-Tests all API endpoints including authentication, CRUD operations, and error handling.
+BuildBytes LMS Backend API Testing Suite - Manual Authentication System
+Tests all API endpoints including JWT authentication, user registration/login, and CRUD operations.
 """
 
 import requests
 import sys
 import json
+import time
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -19,6 +20,10 @@ class BuildBytesAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
+        self.test_users = {
+            "mentor": None,
+            "student": None
+        }
 
     def log_test(self, name: str, success: bool, details: str = ""):
         """Log test result"""
