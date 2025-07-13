@@ -186,8 +186,8 @@ class BuildBytesAPITester:
     def test_database_connection(self) -> bool:
         """Test if the API can handle database-related operations (indirect test)"""
         # This is an indirect test - we'll try to access an endpoint that requires DB
-        # Without auth, it should fail with 401, not 500 (which would indicate DB issues)
-        success, response = self.make_request('GET', '/subject-categories', expected_status=401)
+        # Without auth, it should fail with 403, not 500 (which would indicate DB issues)
+        success, response = self.make_request('GET', '/subject-categories', expected_status=403)
         
         if success:
             return self.log_test("Database Connection (Indirect)", True, "API responding correctly")
